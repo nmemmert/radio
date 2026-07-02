@@ -1,0 +1,29 @@
+services:
+  icecast:
+    build: ./icecast
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "8000"
+    networks:
+      - default
+      - npm
+
+  liquidsoap:
+    image: savonet/liquidsoap:v2.4.5
+    restart: unless-stopped
+    depends_on:
+      - icecast
+    env_file: .env
+    volumes:
+      - ./liquidsoap/radio.liq:/radio.liq:ro
+      - ${MUSIC_DIR}:/music:ro
+    command: ["liquidsoap", "/radio.liq"]
+    networks:
+      - default
+
+networks:
+  default:
+  npm:
+    external: true
+    name: ${NPM_NETWORK}

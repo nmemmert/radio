@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+: "${ICECAST_HOSTNAME:?ICECAST_HOSTNAME is required}"
+: "${ICECAST_SOURCE_PASSWORD:?ICECAST_SOURCE_PASSWORD is required}"
+: "${ICECAST_RELAY_PASSWORD:?ICECAST_RELAY_PASSWORD is required}"
+: "${ICECAST_ADMIN_USER:?ICECAST_ADMIN_USER is required}"
+: "${ICECAST_ADMIN_PASSWORD:?ICECAST_ADMIN_PASSWORD is required}"
+
+envsubst '${ICECAST_HOSTNAME} ${ICECAST_SOURCE_PASSWORD} ${ICECAST_RELAY_PASSWORD} ${ICECAST_ADMIN_USER} ${ICECAST_ADMIN_PASSWORD}' \
+    < /etc/icecast.xml.template > /etc/icecast.xml
+
+exec icecast -c /etc/icecast.xml
