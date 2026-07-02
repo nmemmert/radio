@@ -1,7 +1,6 @@
 FROM alpine:3.20
 
-RUN apk add --no-cache icecast gettext \
-    && adduser -D -H -s /sbin/nologin icecast
+RUN apk add --no-cache icecast gettext
 
 COPY icecast.xml.template /etc/icecast.xml.template
 COPY entrypoint.sh /entrypoint.sh
