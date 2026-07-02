@@ -12,10 +12,11 @@ Edit these placeholders in `docker-compose.yml`:
 
 - `MYSQL_PASSWORD` — set to a random value (internal DB password, never exposed externally).
 - The last `volumes` entry's `source` — your existing music library path (defaults to the same
-  path used by the old stack: `/media/Plex/Media/Music/Shared Music`). Mounted read/write (not
-  read-only — AzuraCast needs write access to cache metadata, album art, and cue points) at
-  `/var/azuracast/library`. It is *not* automatically a station's live media folder. See
-  "Importing your library" below.
+  path used by the old stack: `/media/Plex/Media/Music/Shared Music`).
+- The last `volumes` entry's `target` — must be
+  `/var/azuracast/stations/<your-station-shortcode>/media/library`. Defaults to `home_radio`
+  (matching the station already created); update this if you rename or recreate the station with
+  a different URL stub. See "Importing your library" below for why this path matters.
 
 Everything else (bind-mount paths under `/DATA/AppData/azuracast/...`, the station port range)
 can be left as-is.
@@ -48,13 +49,22 @@ can repoint (or add) `radio.necloud.us` to AzuraCast and decommission the old `i
 
 ## Importing your library
 
-Your existing library is mounted read/write at `/var/azuracast/library` inside the container.
-During station creation, the "Media Storage Location" field defaults to "Create a new storage
-location based on the base directory" (a subfolder under `/var/azuracast/stations/<shortcode>`,
-bind-mounted to `/DATA/AppData/azuracast/stations` on the host) — that's fine to accept for
-initial setup.
+**Do not point a station's "Media Storage Location" or "Base Station Directory" directly at your
+external library.** AzuraCast treats whatever's configured there as content it fully owns and
+manages — including deleting files it doesn't recognize. During testing, setting a station's
+"Base Station Directory" to a mounted external path caused AzuraCast to attempt to `unlink()` a
+real song file as a "cleanup" side effect. It only failed because of a permissions mismatch —
+with matching permissions, that file would have been deleted.
 
-Afterward, go to **Administration → Storage Locations** (system-wide admin, not the per-station
-wizard) and either edit that storage location's path or add a new one pointing directly at
-`/var/azuracast/library`, then assign it to the station. This avoids copying/duplicating your
-whole library into AzuraCast's own folder structure.
+The safe, officially-documented pattern instead: leave the station's Media Storage Location on
+its default (a subfolder under `/var/azuracast/stations/<shortcode>/media`, which AzuraCast owns
+and is free to manage), and bind-mount your real library **read-only** as a subfolder *inside*
+that same default media folder — that's exactly what this compose file's last volume entry does
+(`.../media/library`, `read_only: true`). AzuraCast scans it as part of the station's existing
+media location automatically; no separate Storage Location needs to be created. Because the
+mount itself is read-only at the OS level, it is physically impossible for AzuraCast to modify or
+delete anything in your real library, regardless of what its internal logic tries to do.
+
+The one tradeoff: AzuraCast can't write updated metadata/album art back to files under a
+read-only mount (it'll just save those to its own database instead, per AzuraCast's docs) — a
+reasonable price for guaranteed safety of the only copy of your library.
