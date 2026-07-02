@@ -9,9 +9,12 @@ station that anyone can tune into. Built with:
 - **Icecast** — serves that stream to listeners at a public mount point.
 - **Nginx Proxy Manager (NPM)** — terminates HTTPS and proxies your domain to Icecast (assumed
   already running on your ZimaOS box).
+- **Web player** (`icecast/web/player.html`) — a small self-contained page baked into the Icecast
+  image and served at the site root. Play/pause, volume, live "now playing" and listener count
+  (polled from Icecast's own `/status-json.xsl`, same origin, no extra backend needed).
 
-Listeners connect directly to the stream URL (VLC, browsers via `<audio>`, phone radio apps,
-etc). A custom web player page is a future step, not included here.
+Listeners can just hit `https://radio.yourdomain.com/` for the player, or use the raw stream URL
+directly in VLC, phone radio apps, etc.
 
 ## How images get to ZimaOS
 
@@ -98,11 +101,13 @@ Save. It should immediately be reachable at `https://radio.yourdomain.com`.
 ## Verification
 
 1. `docker compose logs -f liquidsoap` — confirms a clean connection to Icecast.
-2. Visit `https://radio.yourdomain.com/status.xsl` — Icecast's status page should show the
-   `/stream` mountpoint, current listener count, and the currently playing track.
-3. Open `https://radio.yourdomain.com/stream` in VLC or a browser — audio should play
-   continuously, with metadata updating as tracks change.
-4. `docker compose restart liquidsoap` — confirms it reconnects automatically and playback
+2. Visit `https://radio.yourdomain.com/` — the web player should load, show "Live" with a
+   listener count, and display the currently playing track.
+3. Visit `https://radio.yourdomain.com/status.xsl` — Icecast's raw status page (still reachable
+   directly, just no longer the site root) should show the `/stream` mountpoint.
+4. Press play on the web player, or open `https://radio.yourdomain.com/stream` directly in VLC —
+   audio should play continuously, with metadata updating as tracks change.
+5. `docker compose restart liquidsoap` — confirms it reconnects automatically and playback
    resumes (validates resilience after a reboot/crash).
 
 ## Updating the stack

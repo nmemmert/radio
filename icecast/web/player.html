@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radio</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0f0f13 0%, #1a1a24 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #f2f2f5;
+  }
+  .player {
+    width: 100%;
+    max-width: 420px;
+    margin: 24px;
+    padding: 32px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .description {
+    margin: 0 0 28px;
+    min-height: 18px;
+    font-size: 14px;
+    color: #9a9aa5;
+  }
+  .play-button {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: none;
+    background: #6c5ce7;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .play-button:hover { background: #7d70ea; }
+  .play-button:active { transform: scale(0.95); }
+  .now-playing { min-height: 44px; margin-bottom: 20px; }
+  .now-playing .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6c5ce7;
+    margin-bottom: 6px;
+  }
+  .now-playing .track {
+    font-size: 16px;
+    font-weight: 500;
+    word-break: break-word;
+  }
+  .meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 13px;
+    color: #9a9aa5;
+    margin-bottom: 20px;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+    margin-right: 6px;
+  }
+  .status-dot.live { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+  .volume {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+  .volume input[type="range"] { width: 140px; }
+</style>
+</head>
+<body>
+  <div class="player">
+    <h1 id="station-name">Radio</h1>
+    <p class="description" id="station-description"></p>
+
+    <button class="play-button" id="play-button" aria-label="Play">&#9654;</button>
+
+    <div class="now-playing">
+      <div class="label">Now Playing</div>
+      <div class="track" id="track">&mdash;</div>
+    </div>
+
+    <div class="meta">
+      <span><span class="status-dot" id="status-dot"></span><span id="status-text">Checking&hellip;</span></span>
+      <span id="listeners"></span>
+    </div>
+
+    <div class="volume">
+      <span>&#128266;</span>
+      <input type="range" id="volume" min="0" max="100" value="80">
+    </div>
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playButton = document.getElementById('play-button');
+    const volumeSlider = document.getElementById('volume');
+    const trackEl = document.getElementById('track');
+    const stationName = document.getElementById('station-name');
+    const stationDescription = document.getElementById('station-description');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const listenersEl = document.getElementById('listeners');
+
+    audio.volume = volumeSlider.value / 100;
+
+    let playing = false;
+
+    playButton.addEventListener('click', () => {
+      if (playing) {
+        audio.pause();
+        return;
+      }
+      // Always reconnect fresh so we join the live stream, not a stale buffer.
+      audio.src = '/stream?_=' + Date.now();
+      audio.play().catch(() => {});
+    });
+
+    audio.addEventListener('playing', () => {
+      playing = true;
+      playButton.innerHTML = '&#10074;&#10074;';
+      playButton.setAttribute('aria-label', 'Pause');
+    });
+
+    audio.addEventListener('pause', () => {
+      playing = false;
+      playButton.innerHTML = '&#9654;';
+      playButton.setAttribute('aria-label', 'Play');
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      audio.volume = volumeSlider.value / 100;
+    });
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/status-json.xsl', { cache: 'no-store' });
+        const data = await res.json();
+        let source = data.icestats && data.icestats.source;
+        if (Array.isArray(source)) {
+          source = source.find((s) => s.listenurl && s.listenurl.endsWith('/stream')) || source[0];
+        }
+
+        if (source) {
+          stationName.textContent = source.server_name || 'Radio';
+          stationDescription.textContent = source.server_description || '';
+          trackEl.textContent = source.title || '—';
+          const listeners = source.listeners ?? 0;
+          listenersEl.textContent = listeners + (listeners === 1 ? ' listener' : ' listeners');
+          statusDot.classList.add('live');
+          statusText.textContent = 'Live';
+        } else {
+          stationDescription.textContent = '';
+          trackEl.textContent = '—';
+          listenersEl.textContent = '';
+          statusDot.classList.remove('live');
+          statusText.textContent = 'Offline';
+        }
+      } catch (err) {
+        statusDot.classList.remove('live');
+        statusText.textContent = 'Unavailable';
+      }
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 10000);
+  </script>
+</body>
+</html>
