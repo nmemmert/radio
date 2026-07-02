@@ -68,3 +68,11 @@ delete anything in your real library, regardless of what its internal logic trie
 The one tradeoff: AzuraCast can't write updated metadata/album art back to files under a
 read-only mount (it'll just save those to its own database instead, per AzuraCast's docs) — a
 reasonable price for guaranteed safety of the only copy of your library.
+
+## Media showing up but nothing plays ("Station Offline")
+
+Having files appear under Media isn't enough — AutoDJ only plays from a **playlist**, and that
+playlist needs to actually be scheduled/enabled. After importing media, go to the **Playlists**
+tab, create (or edit the default) playlist to include your library's tracks, and make sure it's
+enabled to play. Without this, both Icecast and AutoDJ can show "Running" while Now Playing still
+says "Station Offline" indefinitely.
