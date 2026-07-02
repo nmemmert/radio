@@ -1,10 +1,11 @@
-name: Build and push icecast image
+name: Build and push radio images
 
 on:
   push:
     branches: [main]
     paths:
       - "icecast/**"
+      - "liquidsoap/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -15,6 +16,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: ./icecast
+            image: radio-icecast
+          - context: ./liquidsoap
+            image: radio-liquidsoap
     steps:
       - uses: actions/checkout@v4
 
@@ -32,9 +40,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./icecast
+          context: ${{ matrix.context }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/radio-icecast:latest
-            ghcr.io/${{ github.repository_owner }}/radio-icecast:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.sha }}

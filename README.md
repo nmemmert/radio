@@ -13,18 +13,23 @@ etc). A custom web player page is a future step, not included here.
 
 ## How images get to ZimaOS
 
-The `icecast` image isn't built on the ZimaOS box. A GitHub Actions workflow
-(`.github/workflows/build.yml`) builds it from `icecast/` and pushes it to GitHub Container
-Registry (`ghcr.io/nmemmert/radio-icecast`) on every push to `main` that touches `icecast/`.
-`docker-compose.yml` just references that image, so deploying/updating on ZimaOS is a `git pull`
-+ `docker compose pull` + `docker compose up -d` — no build tools or CPU-heavy image builds on
-the device itself. `liquidsoap` already uses the official pre-built `savonet/liquidsoap` image.
+Neither image is built on the ZimaOS box. A GitHub Actions workflow
+(`.github/workflows/build.yml`) builds both `icecast/` and `liquidsoap/` (the Liquidsoap script
+is baked into its image at build time) and pushes them to GitHub Container Registry
+(`ghcr.io/nmemmert/radio-icecast`, `ghcr.io/nmemmert/radio-liquidsoap`) on every push to `main`
+that touches either folder.
+
+Because of this, **ZimaOS doesn't need this git repo at all** — only two small files:
+`docker-compose.yml` and `.env`. Copy just those onto the box (scp, ZimaOS's file manager, or
+paste directly into ZimaOS's app/compose UI if it supports pasting a compose YAML), no `git
+clone` required. `docker compose pull` fetches the actual images.
 
 **One-time step after the first successful workflow run:** by default GHCR publishes new
 packages as private, even from a public push. Go to the repo on GitHub → **Packages** (right
-sidebar) → `radio-icecast` → **Package settings** → change visibility to **Public**. This lets
-ZimaOS `docker compose pull` without needing any registry login. (The image itself has no
-secrets baked in — passwords are injected from `.env` at container start — so public is safe.)
+sidebar) → for each of `radio-icecast` and `radio-liquidsoap` → **Package settings** → change
+visibility to **Public**. This lets ZimaOS `docker compose pull` without needing any registry
+login. (Neither image has secrets baked in — passwords/paths are injected from `.env` at
+container start — so public is safe.)
 
 ## One-time setup
 
@@ -39,13 +44,11 @@ docker network ls
 Look for the network NPM's container is attached to (often something like `npm_default` or
 `nginxproxymanager_default`). You'll need this for `.env`.
 
-### 2. Clone and configure
+### 2. Get the two files onto ZimaOS
 
-```sh
-git clone <this-repo-url> radio
-cd radio
-cp .env.example .env
-```
+Copy `docker-compose.yml` and `.env.example` (rename to `.env`) from this repo onto the ZimaOS
+box, in their own folder (e.g. `/DATA/AppData/radio/`) — via `scp`, ZimaOS's file manager
+upload, or by pasting the compose contents into ZimaOS's compose UI if it has one.
 
 Edit `.env`:
 
@@ -99,13 +102,15 @@ Save. It should immediately be reachable at `https://radio.yourdomain.com`.
 
 ## Updating the stack
 
-Pull the latest code and images, then recreate containers:
+New pushes to `main` rebuild the images automatically. On ZimaOS, just re-pull and recreate:
 
 ```sh
-git pull
 docker compose pull
 docker compose up -d
 ```
+
+If `docker-compose.yml` itself changes (e.g. a new env var), copy the updated file over before
+running the above.
 
 ## Updating the library
 
