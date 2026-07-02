@@ -199,7 +199,6 @@ services:
       - type: bind
         source: /media/Plex/Media/Music/Shared Music
         target: /var/azuracast/library
-        read_only: true
     ulimits:
       nofile:
         soft: 65536
@@ -237,7 +236,7 @@ services:
       volumes:
         - container: /var/azuracast/library
           description:
-            en_us: "Your existing music library, mounted read-only for reference/import (not a station's live media folder)"
+            en_us: "Your existing music library. Point a Storage Location at this path in AzuraCast's admin to use it directly, instead of copying files into a station's own media folder."
     cap_add: []
     network_mode: bridge
     privileged: false

@@ -12,9 +12,10 @@ Edit these placeholders in `docker-compose.yml`:
 
 - `MYSQL_PASSWORD` — set to a random value (internal DB password, never exposed externally).
 - The last `volumes` entry's `source` — your existing music library path (defaults to the same
-  path used by the old stack: `/media/Plex/Media/Music/Shared Music`). This is mounted **read
-  only** at `/var/azuracast/library` for reference/import — it is *not* automatically a station's
-  live media folder. See "Importing your library" below.
+  path used by the old stack: `/media/Plex/Media/Music/Shared Music`). Mounted read/write (not
+  read-only — AzuraCast needs write access to cache metadata, album art, and cue points) at
+  `/var/azuracast/library`. It is *not* automatically a station's live media folder. See
+  "Importing your library" below.
 
 Everything else (bind-mount paths under `/DATA/AppData/azuracast/...`, the station port range)
 can be left as-is.
@@ -47,16 +48,13 @@ can repoint (or add) `radio.necloud.us` to AzuraCast and decommission the old `i
 
 ## Importing your library
 
-Your existing library is mounted read-only at `/var/azuracast/library` inside the container so
-it's visible without copying anything yet. How to actually get AzuraCast playing from it depends
-on what you decide once you've created a station in the UI:
+Your existing library is mounted read/write at `/var/azuracast/library` inside the container.
+During station creation, the "Media Storage Location" field defaults to "Create a new storage
+location based on the base directory" (a subfolder under `/var/azuracast/stations/<shortcode>`,
+bind-mounted to `/DATA/AppData/azuracast/stations` on the host) — that's fine to accept for
+initial setup.
 
-- Each station has its own media folder under `/var/azuracast/stations/<shortcode>/media`
-  (already bind-mounted to `/DATA/AppData/azuracast/stations` on the host). You could symlink
-  or copy from `/var/azuracast/library` into there.
-- AzuraCast may also support a custom absolute storage location per station (under
-  Administration → Storage Locations) pointing directly at a mounted path, avoiding a copy
-  entirely — worth checking in the UI before copying anything.
-
-This part hasn't been tested yet — treat it as the first thing to figure out once the base app
-is up and you've created your first station.
+Afterward, go to **Administration → Storage Locations** (system-wide admin, not the per-station
+wizard) and either edit that storage location's path or add a new one pointing directly at
+`/var/azuracast/library`, then assign it to the station. This avoids copying/duplicating your
+whole library into AzuraCast's own folder structure.
