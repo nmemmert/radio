@@ -1,27 +1,84 @@
+name: radio
 services:
   icecast:
+    container_name: icecast
     image: ghcr.io/nmemmert/radio-icecast:latest
     restart: unless-stopped
-    env_file: .env
-    expose:
-      - "8000"
-    networks:
-      - default
-      - npm
+    environment:
+      - ICECAST_HOSTNAME=radio.yourdomain.com
+      - ICECAST_SOURCE_PASSWORD=changeme-source
+      - ICECAST_RELAY_PASSWORD=changeme-relay
+      - ICECAST_ADMIN_USER=admin
+      - ICECAST_ADMIN_PASSWORD=changeme-admin
+    ports:
+      - target: 8000
+        published: "8000"
+        protocol: tcp
+    x-casaos:
+      envs:
+        - container: ICECAST_HOSTNAME
+          description:
+            en_us: "Public domain/subdomain listeners will use (set up in your reverse proxy)"
+        - container: ICECAST_SOURCE_PASSWORD
+          description:
+            en_us: "Password the liquidsoap container uses to authenticate as the stream source. Must match liquidsoap's ICECAST_SOURCE_PASSWORD."
+        - container: ICECAST_RELAY_PASSWORD
+          description:
+            en_us: "Password for Icecast relay servers (unused unless you add one - set to any random value)"
+        - container: ICECAST_ADMIN_USER
+          description:
+            en_us: "Username for the Icecast admin panel"
+        - container: ICECAST_ADMIN_PASSWORD
+          description:
+            en_us: "Password for the Icecast admin panel"
+      ports:
+        - container: "8000"
+          description:
+            en_us: "Icecast stream and status page - point your reverse proxy here"
+      volumes: []
+    cap_add: []
+    privileged: false
 
   liquidsoap:
+    container_name: liquidsoap
     image: ghcr.io/nmemmert/radio-liquidsoap:latest
     restart: unless-stopped
     depends_on:
       - icecast
-    env_file: .env
+    environment:
+      - ICECAST_SOURCE_PASSWORD=changeme-source
     volumes:
-      - ${MUSIC_DIR}:/music:ro
-    networks:
-      - default
+      - type: bind
+        source: /DATA/Media/Music
+        target: /music
+        read_only: true
+    x-casaos:
+      envs:
+        - container: ICECAST_SOURCE_PASSWORD
+          description:
+            en_us: "Must match the icecast service's ICECAST_SOURCE_PASSWORD above"
+      ports: []
+      volumes:
+        - container: /music
+          description:
+            en_us: "Your music library (mp3/flac/etc), mounted read-only"
+    cap_add: []
+    privileged: false
 
-networks:
-  default:
-  npm:
-    external: true
-    name: ${NPM_NETWORK}
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  author: nmemmert
+  category: Media
+  description:
+    en_US: >
+      Streams your personal music library as a single continuous, shuffled
+      Icecast radio station that any device can tune into over the internet.
+  developer: nmemmert
+  main: icecast
+  port_map: "8000"
+  scheme: http
+  store_app_id: radio
+  title:
+    en_US: Radio

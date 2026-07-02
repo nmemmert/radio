@@ -19,47 +19,50 @@ is baked into its image at build time) and pushes them to GitHub Container Regis
 (`ghcr.io/nmemmert/radio-icecast`, `ghcr.io/nmemmert/radio-liquidsoap`) on every push to `main`
 that touches either folder.
 
-Because of this, **ZimaOS doesn't need this git repo at all** — only two small files:
-`docker-compose.yml` and `.env`. Copy just those onto the box (scp, ZimaOS's file manager, or
-paste directly into ZimaOS's app/compose UI if it supports pasting a compose YAML), no `git
-clone` required. `docker compose pull` fetches the actual images.
+`docker-compose.yml` is a self-contained ZimaOS/CasaOS-style app definition (same shape as your
+Emby app) — it references those pre-built images directly and needs no `.env` file. **ZimaOS
+doesn't need this git repo at all**: just take the contents of `docker-compose.yml`, edit the
+placeholder values, and paste it into ZimaOS's "Install a customized app" / compose-import screen
+(or drop it in a folder and run `docker compose up -d` over SSH if you prefer the CLI).
 
 **One-time step after the first successful workflow run:** by default GHCR publishes new
 packages as private, even from a public push. Go to the repo on GitHub → **Packages** (right
 sidebar) → for each of `radio-icecast` and `radio-liquidsoap` → **Package settings** → change
-visibility to **Public**. This lets ZimaOS `docker compose pull` without needing any registry
-login. (Neither image has secrets baked in — passwords/paths are injected from `.env` at
-container start — so public is safe.)
+visibility to **Public**. This lets ZimaOS pull without any registry login. (Neither image has
+secrets baked in — passwords/paths are just plain environment values — so public is safe.)
+
+## Networking note
+
+Unlike a single-container app (e.g. Emby), `icecast` and `liquidsoap` need to talk to each
+other, so — apart from that — only `icecast` publishes a port to the host (`8000`), the same way
+Emby publishes `8096`/`8920`. `liquidsoap` has no published port; it only needs to reach
+`icecast` internally, which it does by container/service name over the network Docker Compose
+creates automatically. Point your reverse proxy at `<zimaos-lan-ip>:8000`, not at a container
+name.
 
 ## One-time setup
 
-### 1. Find your NPM Docker network name
+### 1. Edit the placeholder values
 
-On the ZimaOS box:
+Before installing, edit these in `docker-compose.yml`:
 
-```sh
-docker network ls
-```
+- `icecast.environment`:
+  - `ICECAST_HOSTNAME` — your public subdomain (e.g. `radio.yourdomain.com`).
+  - `ICECAST_SOURCE_PASSWORD` — generate a strong value (e.g. `openssl rand -hex 16`). **Must
+    match** the `liquidsoap` service's `ICECAST_SOURCE_PASSWORD` below it.
+  - `ICECAST_RELAY_PASSWORD` — any random value (unused unless you add a relay).
+  - `ICECAST_ADMIN_USER` / `ICECAST_ADMIN_PASSWORD` — credentials for the Icecast admin panel.
+- `liquidsoap.environment.ICECAST_SOURCE_PASSWORD` — same value as icecast's above.
+- `liquidsoap.volumes[0].source` — absolute path on the ZimaOS host to your music library
+  (default placeholder: `/DATA/Media/Music`). Mixed mp3/flac/etc is fine.
 
-Look for the network NPM's container is attached to (often something like `npm_default` or
-`nginxproxymanager_default`). You'll need this for `.env`.
+Don't commit your real passwords back into this file in the repo — keep the checked-in version
+with placeholders and only fill in real values in the copy you install on ZimaOS.
 
-### 2. Get the two files onto ZimaOS
+### 2. Install on ZimaOS
 
-Copy `docker-compose.yml` and `.env.example` (rename to `.env`) from this repo onto the ZimaOS
-box, in their own folder (e.g. `/DATA/AppData/radio/`) — via `scp`, ZimaOS's file manager
-upload, or by pasting the compose contents into ZimaOS's compose UI if it has one.
-
-Edit `.env`:
-
-- `ICECAST_HOSTNAME` — the public subdomain you'll use (e.g. `radio.yourdomain.com`).
-- `ICECAST_SOURCE_PASSWORD`, `ICECAST_RELAY_PASSWORD`, `ICECAST_ADMIN_PASSWORD` — generate
-  strong random values, e.g. `openssl rand -hex 16` for each.
-- `MUSIC_DIR` — absolute path on the ZimaOS host to your music folder (mixed mp3/flac/etc is
-  fine).
-- `NPM_NETWORK` — the network name found in step 1.
-
-### 3. Start it
+Paste the edited YAML into ZimaOS's custom-install/compose-import screen, or place it at e.g.
+`/DATA/AppData/radio/docker-compose.yml` and run:
 
 ```sh
 docker compose pull
@@ -74,13 +77,12 @@ docker compose logs -f liquidsoap
 
 You should see it connect to Icecast without repeated errors.
 
-### 4. Add the proxy host in Nginx Proxy Manager
+### 3. Add the proxy host in Nginx Proxy Manager
 
 In the NPM UI, add a new **Proxy Host**:
 
 - Domain: your chosen subdomain (e.g. `radio.yourdomain.com`)
-- Scheme: `http`, Forward Hostname/Port: `icecast` / `8000`
-- Enable **Websockets Support** (harmless either way, not strictly required for Icecast)
+- Scheme: `http`, Forward Hostname/Port: `<zimaos-lan-ip>` / `8000`
 - SSL tab: request a new Let's Encrypt certificate, force SSL
 - **Advanced** tab, add this custom Nginx config so the live stream isn't buffered/delayed:
 
@@ -109,15 +111,15 @@ docker compose pull
 docker compose up -d
 ```
 
-If `docker-compose.yml` itself changes (e.g. a new env var), copy the updated file over before
+If `docker-compose.yml` itself changes, update the installed copy on ZimaOS to match before
 running the above.
 
 ## Updating the library
 
-Just add/remove files under `MUSIC_DIR` on the ZimaOS host — Liquidsoap watches the directory
+Just add/remove files under the music path on the ZimaOS host — Liquidsoap watches the directory
 and picks up changes automatically (no restart needed).
 
 ## Admin access
 
-Icecast's admin panel is at `https://radio.yourdomain.com/admin/` using `ICECAST_ADMIN_USER` /
-`ICECAST_ADMIN_PASSWORD` from your `.env`.
+Icecast's admin panel is at `https://radio.yourdomain.com/admin/` using the
+`ICECAST_ADMIN_USER` / `ICECAST_ADMIN_PASSWORD` values you set.
