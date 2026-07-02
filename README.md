@@ -3,7 +3,9 @@
 Streams your music library as a single continuous, shuffled Icecast stream — like a real radio
 station that anyone can tune into. Built with:
 
-- **Liquidsoap** — shuffles your library with crossfades and feeds a continuous stream to Icecast.
+- **Liquidsoap** — shuffles your library and feeds a continuous stream to Icecast (no crossfade
+  for now — the Liquidsoap version pinned here doesn't ship the smart-crossfade helper the docs
+  advertise; tracks play back-to-back instead. Can be revisited later).
 - **Icecast** — serves that stream to listeners at a public mount point.
 - **Nginx Proxy Manager (NPM)** — terminates HTTPS and proxies your domain to Icecast (assumed
   already running on your ZimaOS box).

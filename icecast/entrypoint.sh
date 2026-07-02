@@ -8,6 +8,6 @@ set -eu
 : "${ICECAST_ADMIN_PASSWORD:?ICECAST_ADMIN_PASSWORD is required}"
 
 envsubst '${ICECAST_HOSTNAME} ${ICECAST_SOURCE_PASSWORD} ${ICECAST_RELAY_PASSWORD} ${ICECAST_ADMIN_USER} ${ICECAST_ADMIN_PASSWORD}' \
-    < /etc/icecast.xml.template > /etc/icecast.xml
+    < /etc/icecast.xml.template > /tmp/icecast.xml
 
-exec icecast -c /etc/icecast.xml
+exec icecast -c /tmp/icecast.xml

@@ -14,11 +14,6 @@ music = playlist(mode="randomize", reload_mode="watch", "/music")
 # Silence fallback so the stream never dies if the library is briefly empty.
 radio = fallback(track_sensitive=false, [music, blank(duration=5.)])
 
-def transition(a, b) =
-  cross.smart(a, b)
-end
-radio = cross(duration=3., transition, radio)
-
 output.icecast(
   %mp3(bitrate=192),
   host=icecast_host,
