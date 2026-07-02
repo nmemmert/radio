@@ -1,6 +1,6 @@
 services:
   icecast:
-    build: ./icecast
+    image: ghcr.io/nmemmert/radio-icecast:latest
     restart: unless-stopped
     env_file: .env
     expose:

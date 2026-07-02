@@ -11,6 +11,21 @@ station that anyone can tune into. Built with:
 Listeners connect directly to the stream URL (VLC, browsers via `<audio>`, phone radio apps,
 etc). A custom web player page is a future step, not included here.
 
+## How images get to ZimaOS
+
+The `icecast` image isn't built on the ZimaOS box. A GitHub Actions workflow
+(`.github/workflows/build.yml`) builds it from `icecast/` and pushes it to GitHub Container
+Registry (`ghcr.io/nmemmert/radio-icecast`) on every push to `main` that touches `icecast/`.
+`docker-compose.yml` just references that image, so deploying/updating on ZimaOS is a `git pull`
++ `docker compose pull` + `docker compose up -d` — no build tools or CPU-heavy image builds on
+the device itself. `liquidsoap` already uses the official pre-built `savonet/liquidsoap` image.
+
+**One-time step after the first successful workflow run:** by default GHCR publishes new
+packages as private, even from a public push. Go to the repo on GitHub → **Packages** (right
+sidebar) → `radio-icecast` → **Package settings** → change visibility to **Public**. This lets
+ZimaOS `docker compose pull` without needing any registry login. (The image itself has no
+secrets baked in — passwords are injected from `.env` at container start — so public is safe.)
+
 ## One-time setup
 
 ### 1. Find your NPM Docker network name
@@ -44,7 +59,8 @@ Edit `.env`:
 ### 3. Start it
 
 ```sh
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Check logs:
@@ -80,6 +96,16 @@ Save. It should immediately be reachable at `https://radio.yourdomain.com`.
    continuously, with metadata updating as tracks change.
 4. `docker compose restart liquidsoap` — confirms it reconnects automatically and playback
    resumes (validates resilience after a reboot/crash).
+
+## Updating the stack
+
+Pull the latest code and images, then recreate containers:
+
+```sh
+git pull
+docker compose pull
+docker compose up -d
+```
 
 ## Updating the library
 
