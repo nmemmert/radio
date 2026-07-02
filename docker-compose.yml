@@ -45,6 +45,7 @@ services:
     restart: unless-stopped
     depends_on:
       - icecast
+    network_mode: "service:icecast"
     environment:
       - ICECAST_SOURCE_PASSWORD=changeme-source
     volumes:

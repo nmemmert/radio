@@ -3,7 +3,10 @@
 settings.log.stdout.set(true)
 settings.log.level.set(3)
 
-icecast_host = "icecast"
+# liquidsoap shares icecast's network namespace (network_mode: service:icecast
+# in docker-compose.yml), so it connects via localhost rather than a
+# container name - avoids depending on Docker's embedded DNS being present.
+icecast_host = "localhost"
 icecast_port = 8000
 source_password = environment.get("ICECAST_SOURCE_PASSWORD")
 

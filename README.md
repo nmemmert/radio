@@ -36,11 +36,12 @@ secrets baked in — passwords/paths are just plain environment values — so pu
 ## Networking note
 
 Unlike a single-container app (e.g. Emby), `icecast` and `liquidsoap` need to talk to each
-other, so — apart from that — only `icecast` publishes a port to the host (`8000`), the same way
-Emby publishes `8096`/`8920`. `liquidsoap` has no published port; it only needs to reach
-`icecast` internally, which it does by container/service name over the network Docker Compose
-creates automatically. Point your reverse proxy at `<zimaos-lan-ip>:8000`, not at a container
-name.
+other. Rather than rely on Docker's DNS-based service discovery (ZimaOS's app install flow may
+not set up the same kind of network a plain `docker compose up` would), `liquidsoap` uses
+`network_mode: "service:icecast"` — it literally shares icecast's network namespace and talks to
+it over `localhost:8000`, no name resolution involved. Only `icecast` publishes a port to the
+host (`8000`), the same way Emby publishes `8096`/`8920`. Point your reverse proxy at
+`<zimaos-lan-ip>:8000`, not at a container name.
 
 ## One-time setup
 
