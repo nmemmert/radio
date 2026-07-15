@@ -29,4 +29,7 @@ PODCAST_TIME="${PODCAST_TIME:-}"
   cat /tmp/radio_post.liq
 } > /tmp/radio.liq
 
+# Ensure history.log exists so file.write(append=true) doesn't fail on first track.
+touch /config/history.log
+
 exec liquidsoap /tmp/radio.liq
