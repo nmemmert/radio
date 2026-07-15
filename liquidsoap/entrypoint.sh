@@ -29,7 +29,8 @@ PODCAST_TIME="${PODCAST_TIME:-}"
   cat /tmp/radio_post.liq
 } > /tmp/radio.liq
 
-# Ensure history.log exists so file.write(append=true) doesn't fail on first track.
+# Ensure config dir and history.log exist so file.write(append=true) doesn't fail on first track.
+mkdir -p /config
 touch /config/history.log
 
 exec liquidsoap /tmp/radio.liq
