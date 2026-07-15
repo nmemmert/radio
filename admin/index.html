@@ -164,6 +164,24 @@
   .saved-name { flex: 1; cursor: pointer; }
   .saved-name:hover { color: var(--accent); }
   .saved-time { font-size: 11px; color: var(--muted); background: rgba(108,92,231,.12); padding: 2px 7px; border-radius: 20px; }
+
+  /* ======== Time picker ======== */
+  .tp { display: flex; flex-direction: column; gap: 10px; }
+  .tp-enable { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
+  .tp-enable input[type="checkbox"] { width: auto; accent-color: var(--accent); cursor: pointer; }
+  .tp-body { display: flex; flex-direction: column; gap: 10px; transition: opacity .2s; }
+  .tp-body.tp-off { opacity: .35; pointer-events: none; }
+  .tp-days { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tp-day {
+    padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border);
+    background: rgba(255,255,255,.05); color: var(--muted); font-size: 12px;
+    cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+  }
+  .tp-day.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tp-times { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tp-times select { width: auto; padding: 5px 8px; font-size: 13px; }
+  .tp-sep { color: var(--muted); font-size: 12px; }
+  .tp-preview { font-size: 12px; color: var(--accent); min-height: 16px; font-style: italic; }
 </style>
 </head>
 <body>
@@ -235,10 +253,11 @@
         <input type="url" id="PODCAST_FEED_URL" placeholder="https://feeds.example.com/mypodcast">
         <div class="hint">Leave blank to disable. Liquidsoap fetches episode enclosures from this feed.</div>
       </div>
-      <div class="field" style="max-width:200px">
+      <div class="field">
         <label>Schedule Window</label>
-        <input type="text" id="PODCAST_TIME" placeholder="8h-9h">
-        <div class="hint">Liquidsoap time predicate, e.g. <code>8h-9h</code> for 8–9am daily.</div>
+        <input type="hidden" id="PODCAST_TIME">
+        <div id="tp-podcast"></div>
+        <div class="hint" style="margin-top:6px">When to air podcast episodes instead of music.</div>
       </div>
     </div>
 
@@ -289,8 +308,8 @@
 
         <div class="schedule-box">
           <label>Schedule time window (optional)</label>
-          <input type="text" id="pl-time" placeholder="e.g. 8h-10h">
-          <div class="hint" style="margin-top:6px">When to play this playlist instead of the main shuffle. Uses Liquidsoap time syntax.</div>
+          <input type="hidden" id="pl-time">
+          <div id="tp-playlist"></div>
         </div>
 
         <div class="actions">
@@ -306,6 +325,173 @@
 </div><!-- /wrap -->
 
 <script>
+// ---------------------------------------------------------------------------
+// TimePicker
+// ---------------------------------------------------------------------------
+class TimePicker {
+  constructor(containerId, inputId) {
+    this._input = document.getElementById(inputId);
+    this._container = document.getElementById(containerId);
+    this._enabled = false;
+    this._days = new Set();   // empty = every day
+    this._sh = 8; this._sm = 0;
+    this._eh = 10; this._em = 0;
+    this._render();
+  }
+
+  _fmtH(h) {
+    if (h === 0)  return '12 AM';
+    if (h < 12)  return `${h} AM`;
+    if (h === 12) return '12 PM';
+    return `${h - 12} PM`;
+  }
+
+  _buildPredicate() {
+    const fmt = (h, m) => m ? `${h}h${m}` : `${h}h`;
+    const s = fmt(this._sh, this._sm), e = fmt(this._eh, this._em);
+    const days = [...this._days].sort((a, b) => a - b);
+    if (!days.length || days.length === 7) return `${s}-${e}`;
+    return days.map(d => `${d}w${s}-${d}w${e}`).join(' or ');
+  }
+
+  _commit() {
+    this._input.value = this._enabled ? this._buildPredicate() : '';
+    this._updatePreview();
+  }
+
+  _updatePreview() {
+    const prev = this._container.querySelector('.tp-preview');
+    if (!prev) return;
+    if (!this._enabled) { prev.textContent = ''; return; }
+    const days = [...this._days].sort((a, b) => a - b);
+    const DNAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const dayPart = (!days.length || days.length === 7)
+      ? 'every day'
+      : days.map(d => DNAMES[d - 1]).join(', ');
+    const fmtT = (h, m) => {
+      const label = this._fmtH(h);
+      return m ? label.replace(' ', `:${String(m).padStart(2,'0')} `) : label;
+    };
+    prev.textContent = `Plays ${fmtT(this._sh, this._sm)} – ${fmtT(this._eh, this._em)} ${dayPart}`;
+  }
+
+  _refreshDayBtns() {
+    this._container.querySelectorAll('.tp-day').forEach(btn => {
+      const d = +btn.dataset.day;
+      btn.classList.toggle('active',
+        d === 0 ? this._days.size === 0 : this._days.has(d));
+    });
+  }
+
+  parse(str) {
+    str = (str || '').trim();
+    this._enabled = !!str;
+    if (str) {
+      // All days: "8h-10h" or "8h30-10h"
+      const a = str.match(/^(\d+)h(\d*)-(\d+)h(\d*)$/);
+      if (a) {
+        this._days = new Set();
+        this._sh = +a[1]; this._sm = +(a[2]||0);
+        this._eh = +a[3]; this._em = +(a[4]||0);
+      } else {
+        // Day-specific: "1w8h-1w10h or 3w8h-3w10h"
+        const parts = str.split(' or ');
+        const days = new Set();
+        let sh = 8, sm = 0, eh = 10, em = 0, ok = true;
+        for (const p of parts) {
+          const m = p.trim().match(/^(\d)w(\d+)h(\d*)-(\d)w(\d+)h(\d*)$/);
+          if (!m) { ok = false; break; }
+          days.add(+m[1]);
+          sh = +m[2]; sm = +(m[3]||0); eh = +m[5]; em = +(m[6]||0);
+        }
+        if (ok) { this._days = days; this._sh = sh; this._sm = sm; this._eh = eh; this._em = em; }
+      }
+    } else {
+      this._days = new Set(); this._sh = 8; this._sm = 0; this._eh = 10; this._em = 0;
+    }
+    this._input.value = str;
+    this._refreshUI();
+  }
+
+  _refreshUI() {
+    const chk = this._container.querySelector('.tp-chk');
+    if (chk) chk.checked = this._enabled;
+    const body = this._container.querySelector('.tp-body');
+    if (body) body.classList.toggle('tp-off', !this._enabled);
+    this._refreshDayBtns();
+    ['sh','sm','eh','em'].forEach(n => {
+      const el = this._container.querySelector(`[data-sel="${n}"]`);
+      if (el) el.value = this[`_${n}`];
+    });
+    this._updatePreview();
+  }
+
+  _render() {
+    const hours = Array.from({length: 24}, (_, i) =>
+      `<option value="${i}">${this._fmtH(i)}</option>`).join('');
+    const mins = [0,15,30,45].map(m =>
+      `<option value="${m}">${String(m).padStart(2,'0')}</option>`).join('');
+    const DAY_OPTS = [
+      {d:0,n:'Every day'},{d:1,n:'Mon'},{d:2,n:'Tue'},{d:3,n:'Wed'},
+      {d:4,n:'Thu'},{d:5,n:'Fri'},{d:6,n:'Sat'},{d:7,n:'Sun'}
+    ];
+    this._container.innerHTML = `
+      <div class="tp">
+        <label class="tp-enable">
+          <input type="checkbox" class="tp-chk"> Enable schedule
+        </label>
+        <div class="tp-body tp-off">
+          <div class="tp-days">
+            ${DAY_OPTS.map(({d,n})=>`<button type="button" class="tp-day${d===0?' active':''}" data-day="${d}">${n}</button>`).join('')}
+          </div>
+          <div class="tp-times">
+            <select data-sel="sh">${hours}</select>
+            <select data-sel="sm">${mins}</select>
+            <span class="tp-sep">to</span>
+            <select data-sel="eh">${hours}</select>
+            <select data-sel="em">${mins}</select>
+          </div>
+          <div class="tp-preview"></div>
+        </div>
+      </div>`;
+
+    // Enable toggle
+    const chk = this._container.querySelector('.tp-chk');
+    chk.addEventListener('change', () => {
+      this._enabled = chk.checked;
+      this._container.querySelector('.tp-body').classList.toggle('tp-off', !this._enabled);
+      this._commit();
+    });
+
+    // Day buttons
+    this._container.querySelectorAll('.tp-day').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = +btn.dataset.day;
+        if (d === 0) {
+          this._days = new Set();
+        } else {
+          if (this._days.has(d)) this._days.delete(d); else this._days.add(d);
+          if (this._days.size === 7) this._days = new Set();
+        }
+        this._refreshDayBtns();
+        this._commit();
+      });
+    });
+
+    // Time selects
+    ['sh','sm','eh','em'].forEach(n => {
+      this._container.querySelector(`[data-sel="${n}"]`).addEventListener('change', e => {
+        this[`_${n}`] = +e.target.value;
+        this._commit();
+      });
+    });
+
+    // Set default hour values
+    this._container.querySelector('[data-sel="sh"]').value = this._sh;
+    this._container.querySelector('[data-sel="eh"]').value = this._eh;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Utils
 // ---------------------------------------------------------------------------
@@ -346,6 +532,7 @@ const SETTING_KEYS = ['STATION_NAME','STATION_DESCRIPTION','GENRE','CROSSFADE_DU
 async function loadSettings() {
   const data = await fetch('/panel/api/settings').then(r=>r.json());
   SETTING_KEYS.forEach(k => { const el=document.getElementById(k); if(el) el.value=data[k]??''; });
+  podcastPicker.parse(data['PODCAST_TIME']||'');
 }
 
 document.getElementById('save-btn').addEventListener('click', async () => {
@@ -526,7 +713,9 @@ async function openPlaylist(name) {
   const tracks = await fetch(`/panel/api/playlists/${encodeURIComponent(name)}`).then(r=>r.json());
   plTracks = tracks;
   const sched = schedule.find(e=>e.name===name);
-  document.getElementById('pl-time').value = sched?.time || '';
+  const t = sched?.time || '';
+  document.getElementById('pl-time').value = t;
+  playlistPicker.parse(t);
   renderPlaylist();
   renderLibrary();
 }
@@ -540,6 +729,7 @@ document.getElementById('pl-new-btn').addEventListener('click', () => {
   document.getElementById('pl-name').value = '';
   document.getElementById('pl-name-label').textContent = 'untitled';
   document.getElementById('pl-time').value = '';
+  playlistPicker.parse('');
   plTracks = [];
   renderPlaylist();
   renderLibrary();
@@ -587,6 +777,9 @@ document.getElementById('pl-delete-btn').addEventListener('click', async () => {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
+const podcastPicker  = new TimePicker('tp-podcast',  'PODCAST_TIME');
+const playlistPicker = new TimePicker('tp-playlist', 'pl-time');
+
 loadSettings();
 loadHistory();
 refreshLive();
