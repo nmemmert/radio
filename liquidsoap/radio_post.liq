@@ -10,7 +10,7 @@ settings.server.telnet.port.set(1234)
 def on_track_change(m) =
   artist = m["artist"]
   title  = m["title"]
-  ts     = time.to_string(time.utc(time()))
+  ts     = time.string(time=time())
   ignore(file.write(append=true, "/config/history.log", "#{ts} | #{artist} | #{title}\n"))
 end
 
