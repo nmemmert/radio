@@ -7,16 +7,17 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg:       #0f0f13;
-    --surface:  rgba(255,255,255,0.04);
-    --border:   rgba(255,255,255,0.08);
-    --accent:   #6c5ce7;
-    --accent-h: #7d70ea;
-    --muted:    #9a9aa5;
-    --green:    #2ecc71;
-    --red:      #e74c3c;
-    --text:     #f2f2f5;
-    --radius:   14px;
+    --bg:      #0f0f13;
+    --surface: rgba(255,255,255,0.04);
+    --surface2:rgba(255,255,255,0.07);
+    --border:  rgba(255,255,255,0.08);
+    --accent:  #6c5ce7;
+    --accentH: #7d70ea;
+    --muted:   #9a9aa5;
+    --green:   #2ecc71;
+    --red:     #e74c3c;
+    --text:    #f2f2f5;
+    --r:       12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -24,101 +25,145 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
-    padding: 32px 16px 64px;
+    padding: 28px 16px 64px;
   }
-  .wrap { max-width: 640px; margin: 0 auto; }
+  .wrap { max-width: 860px; margin: 0 auto; }
 
-  header { margin-bottom: 32px; }
-  header h1 { font-size: 24px; font-weight: 700; }
-  header p  { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  /* Header */
+  header { margin-bottom: 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header a  { color: var(--accent); text-decoration: none; font-size: 13px; }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 16px;
+  /* Tabs */
+  .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .tab-btn {
+    padding: 8px 18px; border: none; background: none; color: var(--muted);
+    font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color .15s, border-color .15s;
   }
-  .card-title {
-    font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--accent); margin-bottom: 18px;
-  }
+  .tab-btn.active { color: var(--text); border-color: var(--accent); }
 
-  .field { margin-bottom: 16px; }
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; margin-bottom: 14px; }
+  .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 16px; }
+
+  /* Form fields */
+  .field { margin-bottom: 14px; }
   .field:last-child { margin-bottom: 0; }
-  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-  input[type="text"], input[type="url"], input[type="number"] {
-    width: 100%; padding: 9px 12px;
-    border-radius: 8px; border: 1px solid var(--border);
-    background: rgba(255,255,255,0.06); color: var(--text);
-    font-size: 14px; outline: none; transition: border-color 0.15s;
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  input[type="text"], input[type="url"], input[type="number"], select {
+    width: 100%; padding: 8px 11px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+    color: var(--text); font-size: 14px; outline: none; transition: border-color .15s;
   }
-  input:focus { border-color: var(--accent); }
-
-  .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
-
-  .row { display: flex; gap: 12px; }
-  .row .field { flex: 1; }
-
-  /* Live section */
-  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-  .stat {
-    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-  }
-  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-  .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; word-break: break-word; }
-  .stat-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 6px; }
-  .dot.live { background: var(--green); box-shadow: 0 0 7px var(--green); }
+  input:focus, select:focus { border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
   /* Buttons */
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px; border-radius: 8px; border: none;
-    font-size: 14px; font-weight: 500; cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s, opacity .15s;
   }
-  .btn-primary   { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-h); }
-  .btn-ghost {
-    background: rgba(255,255,255,0.07); color: var(--text);
-    border: 1px solid var(--border);
-  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accentH); }
+  .btn-ghost   { background: rgba(255,255,255,0.07); color: var(--text); border: 1px solid var(--border); }
   .btn-ghost:hover { background: rgba(255,255,255,0.12); }
-  .btn-danger { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.25); }
-  .btn-danger:hover { background: rgba(231,76,60,0.25); }
-  .btn:disabled { opacity: 0.45; cursor: default; }
-
-  .actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
-  .save-status { font-size: 13px; color: var(--muted); }
-  .save-status.ok  { color: var(--green); }
-  .save-status.err { color: var(--red); }
+  .btn-danger  { background: rgba(231,76,60,.12); color: var(--red); border: 1px solid rgba(231,76,60,.25); }
+  .btn-danger:hover { background: rgba(231,76,60,.22); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+  .st { font-size: 13px; color: var(--muted); }
+  .st.ok  { color: var(--green); }
+  .st.err { color: var(--red); }
 
   /* Restart banner */
-  .restart-banner {
-    display: none; align-items: center; gap: 10px;
-    background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.3);
-    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
-    font-size: 13px; color: var(--muted);
+  .banner {
+    display: none; gap: 10px; align-items: flex-start;
+    background: rgba(108,92,231,.1); border: 1px solid rgba(108,92,231,.3);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted);
   }
-  .restart-banner.show { display: flex; }
-  .restart-banner strong { color: var(--text); }
+  .banner.show { display: flex; }
+  .banner strong { color: var(--text); }
+  code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: var(--accent); }
+
+  /* Live stats */
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-value { font-size: 17px; font-weight: 600; margin-top: 3px; word-break: break-word; }
+  .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #555; margin-right: 5px; }
+  .dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
   /* History */
-  .history-list { list-style: none; }
-  .history-list li {
-    display: flex; justify-content: space-between; align-items: baseline;
-    padding: 8px 0; border-top: 1px solid var(--border);
-    font-size: 13px; gap: 12px;
-  }
-  .history-list li:first-child { border-top: none; }
+  .hist-list { list-style: none; }
+  .hist-list li { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; gap: 10px; }
+  .hist-list li:first-child { border-top: none; }
   .h-track { flex: 1; min-width: 0; }
   .h-title  { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .h-artist { color: var(--muted); font-size: 12px; margin-top: 1px; }
-  .h-ts     { color: var(--muted); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+  .h-ts     { color: var(--muted); font-size: 11px; white-space: nowrap; }
   .empty    { color: var(--muted); font-size: 13px; }
+
+  /* ======== Playlists tab ======== */
+  .pl-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .pl-layout { grid-template-columns: 1fr; } }
+
+  .pl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .pl-name-input { flex: 1; min-width: 140px; }
+
+  .lib-search { margin-bottom: 10px; }
+  .lib-list {
+    list-style: none; height: 340px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .lib-list li {
+    padding: 7px 11px; font-size: 12px; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    display: flex; align-items: center; gap: 6px;
+    transition: background .1s;
+  }
+  .lib-list li:hover { background: rgba(108,92,231,.15); }
+  .lib-list li.in-playlist { color: var(--muted); }
+  .lib-file { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-add { font-size: 16px; color: var(--accent); flex-shrink: 0; line-height: 1; }
+
+  .track-list {
+    list-style: none; height: 300px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px;
+  }
+  .track-list li {
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+    font-size: 12px; border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .track-list li:last-child { border-bottom: none; }
+  .track-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .track-btns button {
+    background: rgba(255,255,255,.06); border: none; color: var(--muted);
+    width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .1s, color .1s;
+  }
+  .track-btns button:hover { background: rgba(255,255,255,.14); color: var(--text); }
+  .track-btns .rm:hover { background: rgba(231,76,60,.2); color: var(--red); }
+
+  .schedule-box { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .schedule-box label { color: var(--muted); font-size: 12px; display: block; margin-bottom: 6px; }
+  .schedule-box input { width: 140px; }
+
+  /* Saved playlists list */
+  .saved-list { list-style: none; }
+  .saved-list li {
+    display: flex; align-items: center; gap: 8px; padding: 8px 0;
+    border-top: 1px solid var(--border); font-size: 13px;
+  }
+  .saved-list li:first-child { border-top: none; }
+  .saved-name { flex: 1; cursor: pointer; }
+  .saved-name:hover { color: var(--accent); }
+  .saved-time { font-size: 11px; color: var(--muted); background: rgba(108,92,231,.12); padding: 2px 7px; border-radius: 20px; }
 </style>
 </head>
 <body>
@@ -126,223 +171,427 @@
 
   <header>
     <h1>Radio Admin</h1>
-    <p>Station management — <a href="/" style="color:var(--accent);text-decoration:none">← Back to player</a></p>
+    <a href="/">← Back to player</a>
   </header>
 
-  <div class="restart-banner" id="restart-banner">
+  <div class="banner" id="restart-banner">
     <span>⚡</span>
-    <span><strong>Restart the liquidsoap container</strong> to apply saved settings: <code style="color:var(--accent)">docker compose restart liquidsoap</code></span>
+    <div><strong>Restart liquidsoap to apply changes:</strong> <code>docker compose restart liquidsoap</code></div>
   </div>
 
-  <!-- Live -->
-  <div class="card">
-    <div class="card-title">Live</div>
-    <div class="live-grid">
-      <div class="stat">
-        <div class="stat-label">Status</div>
-        <div class="stat-value" id="live-status"><span class="dot" id="live-dot"></span><span id="live-status-text">—</span></div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Listeners</div>
-        <div class="stat-value" id="live-listeners">—</div>
-      </div>
-      <div class="stat" style="grid-column:1/-1">
-        <div class="stat-label">Now Playing</div>
-        <div class="stat-value" id="live-title" style="font-size:15px">—</div>
-        <div class="stat-sub" id="live-artist"></div>
-      </div>
-    </div>
-    <button class="btn btn-ghost" id="skip-btn">&#9654;&#9654; Skip Track</button>
-    <span class="save-status" id="skip-status"></span>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="settings">Settings</button>
+    <button class="tab-btn" data-tab="playlists">Playlists</button>
   </div>
 
-  <!-- Station Identity -->
-  <div class="card">
-    <div class="card-title">Station Identity</div>
-    <div class="field">
-      <label>Station Name</label>
-      <input type="text" id="STATION_NAME" placeholder="My Radio">
-    </div>
-    <div class="field">
-      <label>Description</label>
-      <input type="text" id="STATION_DESCRIPTION" placeholder="Personal music stream">
-    </div>
-    <div class="field">
-      <label>Genre</label>
-      <input type="text" id="GENRE" placeholder="Various">
-    </div>
-  </div>
+  <!-- ===== SETTINGS TAB ===== -->
+  <div id="tab-settings">
 
-  <!-- Stream -->
-  <div class="card">
-    <div class="card-title">Stream</div>
-    <div class="field" style="max-width:200px">
-      <label>Crossfade Duration (seconds)</label>
-      <input type="number" id="CROSSFADE_DURATION" min="0" max="15" step="0.5" placeholder="3">
-      <div class="hint">Set to 0 to disable crossfading between tracks.</div>
-    </div>
-  </div>
-
-  <!-- Podcast -->
-  <div class="card">
-    <div class="card-title">Podcast</div>
-    <div class="field">
-      <label>RSS Feed URL</label>
-      <input type="url" id="PODCAST_FEED_URL" placeholder="https://feeds.example.com/mypodcast">
-      <div class="hint">Leave blank to keep music-only. Liquidsoap fetches episode enclosures from this feed.</div>
-    </div>
-    <div class="field" style="max-width:220px">
-      <label>Schedule Window</label>
-      <input type="text" id="PODCAST_TIME" placeholder="8h-9h">
-      <div class="hint">Liquidsoap time predicate, e.g. <code>8h-9h</code> airs episodes 8–9am daily. Leave blank to disable.</div>
-    </div>
-  </div>
-
-  <!-- Save -->
-  <div class="actions">
-    <button class="btn btn-primary" id="save-btn">Save Settings</button>
-    <span class="save-status" id="save-status"></span>
-  </div>
-
-  <!-- History -->
-  <div class="card" style="margin-top:32px">
-    <div class="card-title">Recently Played</div>
-    <ul class="history-list" id="history-list">
-      <li><span class="empty">Loading…</span></li>
-    </ul>
-  </div>
-
-</div>
-<script>
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  function flash(el, msg, cls, ms=3000) {
-    el.textContent = msg; el.className = 'save-status ' + cls;
-    setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, ms);
-  }
-  function fmtTime(iso) {
-    try {
-      const d = new Date(iso.replace(' ','T') + 'Z');
-      return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    } catch { return iso; }
-  }
-
-  // -------------------------------------------------------------------------
-  // Settings
-  // -------------------------------------------------------------------------
-  const KEYS = ['STATION_NAME','STATION_DESCRIPTION','GENRE','CROSSFADE_DURATION','PODCAST_FEED_URL','PODCAST_TIME'];
-
-  async function loadSettings() {
-    const res  = await fetch('/panel/api/settings');
-    const data = await res.json();
-    KEYS.forEach(k => { const el = document.getElementById(k); if (el) el.value = data[k] ?? ''; });
-  }
-
-  document.getElementById('save-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('save-btn');
-    btn.disabled = true;
-    const payload = {};
-    KEYS.forEach(k => { payload[k] = (document.getElementById(k)?.value ?? '').trim(); });
-    try {
-      const res = await fetch('/panel/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        flash(document.getElementById('save-status'), '✓ Saved', 'ok');
-        document.getElementById('restart-banner').classList.add('show');
-      } else {
-        flash(document.getElementById('save-status'), '✗ ' + (data.error || 'Failed'), 'err');
-      }
-    } catch (e) {
-      flash(document.getElementById('save-status'), '✗ Network error', 'err');
-    }
-    btn.disabled = false;
-  });
-
-  // -------------------------------------------------------------------------
-  // Skip
-  // -------------------------------------------------------------------------
-  document.getElementById('skip-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('skip-btn');
-    btn.disabled = true;
-    try {
-      const res  = await fetch('/panel/api/skip', { method: 'POST' });
-      const data = await res.json();
-      flash(document.getElementById('skip-status'), data.ok ? '✓ Skipped' : '✗ ' + (data.result || 'Failed'), data.ok ? 'ok' : 'err');
-    } catch {
-      flash(document.getElementById('skip-status'), '✗ Network error', 'err');
-    }
-    btn.disabled = false;
-  });
-
-  // -------------------------------------------------------------------------
-  // History
-  // -------------------------------------------------------------------------
-  async function loadHistory() {
-    const res  = await fetch('/panel/api/history');
-    const data = await res.json();
-    const ul   = document.getElementById('history-list');
-    if (!data.length) {
-      ul.innerHTML = '<li><span class="empty">Nothing played yet.</span></li>';
-      return;
-    }
-    ul.innerHTML = data.map(t => `
-      <li>
-        <div class="h-track">
-          <div class="h-title">${esc(t.title || '—')}</div>
-          ${t.artist ? `<div class="h-artist">${esc(t.artist)}</div>` : ''}
+    <!-- Live -->
+    <div class="card">
+      <div class="card-title">Live</div>
+      <div class="live-grid">
+        <div class="stat">
+          <div class="stat-label">Status</div>
+          <div class="stat-value"><span class="dot" id="live-dot"></span><span id="live-st">—</span></div>
         </div>
-        <div class="h-ts">${fmtTime(t.ts)}</div>
-      </li>`).join('');
-  }
+        <div class="stat">
+          <div class="stat-label">Listeners</div>
+          <div class="stat-value" id="live-listeners">—</div>
+        </div>
+        <div class="stat" style="grid-column:1/-1">
+          <div class="stat-label">Now Playing</div>
+          <div class="stat-value" id="live-title" style="font-size:15px">—</div>
+          <div class="stat-sub" id="live-artist"></div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="skip-btn">⏭ Skip Track</button>
+      <span class="st" id="skip-st"></span>
+    </div>
 
-  // -------------------------------------------------------------------------
-  // Live status (polls Icecast's own JSON endpoint — same server, no CORS)
-  // -------------------------------------------------------------------------
-  async function refreshLive() {
-    try {
-      const res    = await fetch('/status-json.xsl', { cache: 'no-store' });
-      const data   = await res.json();
-      let source   = data.icestats?.source;
-      if (Array.isArray(source)) source = source.find(s => s.listenurl?.endsWith('/stream')) || source[0];
+    <!-- Station -->
+    <div class="card">
+      <div class="card-title">Station Identity</div>
+      <div class="field"><label>Station Name</label><input type="text" id="STATION_NAME" placeholder="My Radio"></div>
+      <div class="field"><label>Description</label><input type="text" id="STATION_DESCRIPTION" placeholder="Personal music stream"></div>
+      <div class="field"><label>Genre</label><input type="text" id="GENRE" placeholder="Various"></div>
+    </div>
 
-      const dot  = document.getElementById('live-dot');
-      const stEl = document.getElementById('live-status-text');
-      if (source) {
-        dot.classList.add('live'); stEl.textContent = 'Live';
-        document.getElementById('live-listeners').textContent = (source.listeners ?? 0) + ' listener' + (source.listeners === 1 ? '' : 's');
+    <!-- Stream -->
+    <div class="card">
+      <div class="card-title">Stream</div>
+      <div class="field" style="max-width:200px">
+        <label>Crossfade Duration (seconds)</label>
+        <input type="number" id="CROSSFADE_DURATION" min="0" max="15" step="0.5" placeholder="3">
+        <div class="hint">Set to 0 to disable crossfading.</div>
+      </div>
+    </div>
 
-        let title  = source.title  || '';
-        let artist = source.artist || '';
-        if (!artist && title.includes(' - ')) { [artist, title] = title.split(' - ', 2); }
-        document.getElementById('live-title').textContent  = title  || '—';
-        document.getElementById('live-artist').textContent = artist || '';
-      } else {
-        dot.classList.remove('live'); stEl.textContent = 'Offline';
-        document.getElementById('live-listeners').textContent = '—';
-        document.getElementById('live-title').textContent  = '—';
-        document.getElementById('live-artist').textContent = '';
-      }
-    } catch {
-      document.getElementById('live-status-text').textContent = 'Unavailable';
+    <!-- Podcast -->
+    <div class="card">
+      <div class="card-title">Podcast</div>
+      <div class="field">
+        <label>RSS Feed URL</label>
+        <input type="url" id="PODCAST_FEED_URL" placeholder="https://feeds.example.com/mypodcast">
+        <div class="hint">Leave blank to disable. Liquidsoap fetches episode enclosures from this feed.</div>
+      </div>
+      <div class="field" style="max-width:200px">
+        <label>Schedule Window</label>
+        <input type="text" id="PODCAST_TIME" placeholder="8h-9h">
+        <div class="hint">Liquidsoap time predicate, e.g. <code>8h-9h</code> for 8–9am daily.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="save-btn">Save Settings</button>
+      <span class="st" id="save-st"></span>
+    </div>
+
+    <!-- History -->
+    <div class="card" style="margin-top:28px">
+      <div class="card-title">Recently Played</div>
+      <ul class="hist-list" id="history-list"><li><span class="empty">Loading…</span></li></ul>
+    </div>
+
+  </div><!-- /tab-settings -->
+
+  <!-- ===== PLAYLISTS TAB ===== -->
+  <div id="tab-playlists" hidden>
+
+    <!-- Playlist selector -->
+    <div class="card">
+      <div class="card-title">Playlist</div>
+      <div class="pl-header">
+        <input type="text" class="pl-name-input" id="pl-name" placeholder="Playlist name (e.g. chill, workout)">
+        <button class="btn btn-ghost" id="pl-load-btn">Load</button>
+        <button class="btn btn-ghost" id="pl-new-btn">New</button>
+      </div>
+      <div style="margin-bottom:10px;font-size:12px;color:var(--muted)">Saved playlists:</div>
+      <ul class="saved-list" id="saved-list"><li><span class="empty">None yet.</span></li></ul>
+    </div>
+
+    <!-- Editor -->
+    <div class="pl-layout">
+
+      <!-- Library browser -->
+      <div class="card" style="min-width:0">
+        <div class="card-title">Library <span id="lib-count" style="font-weight:400;color:var(--muted)"></span></div>
+        <div class="lib-search field">
+          <input type="text" id="lib-search" placeholder="Search…">
+        </div>
+        <ul class="lib-list" id="lib-list"><li style="padding:12px;color:var(--muted)">Loading library…</li></ul>
+      </div>
+
+      <!-- Playlist tracks -->
+      <div class="card" style="min-width:0">
+        <div class="card-title">Tracks in "<span id="pl-name-label">untitled</span>"</div>
+        <ul class="track-list" id="track-list"><li style="padding:12px;color:var(--muted)">Add tracks from the library →</li></ul>
+
+        <div class="schedule-box">
+          <label>Schedule time window (optional)</label>
+          <input type="text" id="pl-time" placeholder="e.g. 8h-10h">
+          <div class="hint" style="margin-top:6px">When to play this playlist instead of the main shuffle. Uses Liquidsoap time syntax.</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="pl-save-btn">Save Playlist</button>
+          <button class="btn btn-danger" id="pl-delete-btn">Delete</button>
+          <span class="st" id="pl-st"></span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-playlists -->
+
+</div><!-- /wrap -->
+
+<script>
+// ---------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function flash(el, msg, cls, ms=3000) {
+  el.textContent = msg; el.className = 'st ' + cls;
+  setTimeout(() => { el.textContent=''; el.className='st'; }, ms);
+}
+function fmtTime(iso) {
+  try { return new Date(iso.replace(' ','T')+'Z').toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+  catch { return iso; }
+}
+function basename(p) {
+  return p.split('/').pop();
+}
+
+// ---------------------------------------------------------------------------
+// Tabs
+// ---------------------------------------------------------------------------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-settings').hidden = (tab !== 'settings');
+    document.getElementById('tab-playlists').hidden = (tab !== 'playlists');
+    if (tab === 'playlists') { loadLibrary(); loadSavedPlaylists(); }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+const SETTING_KEYS = ['STATION_NAME','STATION_DESCRIPTION','GENRE','CROSSFADE_DURATION','PODCAST_FEED_URL','PODCAST_TIME'];
+
+async function loadSettings() {
+  const data = await fetch('/panel/api/settings').then(r=>r.json());
+  SETTING_KEYS.forEach(k => { const el=document.getElementById(k); if(el) el.value=data[k]??''; });
+}
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  const payload = {};
+  SETTING_KEYS.forEach(k => { payload[k]=(document.getElementById(k)?.value??'').trim(); });
+  try {
+    const res  = await fetch('/panel/api/settings', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await res.json();
+    if (data.ok) { flash(document.getElementById('save-st'),'✓ Saved','ok'); document.getElementById('restart-banner').classList.add('show'); }
+    else flash(document.getElementById('save-st'),'✗ '+(data.error||'Failed'),'err');
+  } catch { flash(document.getElementById('save-st'),'✗ Network error','err'); }
+  btn.disabled = false;
+});
+
+// ---------------------------------------------------------------------------
+// Skip
+// ---------------------------------------------------------------------------
+document.getElementById('skip-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('skip-btn');
+  btn.disabled = true;
+  try {
+    const data = await fetch('/panel/api/skip',{method:'POST'}).then(r=>r.json());
+    flash(document.getElementById('skip-st'), data.ok?'✓ Skipped':'✗ '+(data.result||'Failed'), data.ok?'ok':'err');
+  } catch { flash(document.getElementById('skip-st'),'✗ Network error','err'); }
+  btn.disabled = false;
+});
+
+// ---------------------------------------------------------------------------
+// History
+// ---------------------------------------------------------------------------
+async function loadHistory() {
+  const data = await fetch('/panel/api/history').then(r=>r.json());
+  const ul   = document.getElementById('history-list');
+  if (!data.length) { ul.innerHTML='<li><span class="empty">Nothing played yet.</span></li>'; return; }
+  ul.innerHTML = data.map(t=>`<li>
+    <div class="h-track"><div class="h-title">${esc(t.title||'—')}</div>${t.artist?`<div class="h-artist">${esc(t.artist)}</div>`:''}</div>
+    <div class="h-ts">${fmtTime(t.ts)}</div>
+  </li>`).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Live status
+// ---------------------------------------------------------------------------
+async function refreshLive() {
+  try {
+    const data   = await fetch('/status-json.xsl',{cache:'no-store'}).then(r=>r.json());
+    let   source = data.icestats?.source;
+    if (Array.isArray(source)) source = source.find(s=>s.listenurl?.endsWith('/stream'))||source[0];
+    const dot = document.getElementById('live-dot');
+    if (source) {
+      dot.classList.add('live'); document.getElementById('live-st').textContent='Live';
+      document.getElementById('live-listeners').textContent=(source.listeners??0)+' listener'+((source.listeners===1)?'':'s');
+      let title=source.title||'', artist=source.artist||'';
+      if (!artist&&title.includes(' - ')) { [artist,title]=title.split(' - ',2); }
+      document.getElementById('live-title').textContent=title||'—';
+      document.getElementById('live-artist').textContent=artist||'';
+    } else {
+      dot.classList.remove('live'); document.getElementById('live-st').textContent='Offline';
+      document.getElementById('live-listeners').textContent='—';
+      document.getElementById('live-title').textContent='—'; document.getElementById('live-artist').textContent='';
     }
-  }
+  } catch { document.getElementById('live-st').textContent='Unavailable'; }
+}
 
-  // -------------------------------------------------------------------------
-  // Init
-  // -------------------------------------------------------------------------
-  loadSettings();
-  loadHistory();
-  refreshLive();
-  setInterval(refreshLive,  10000);
-  setInterval(loadHistory,  30000);
+// ---------------------------------------------------------------------------
+// Library browser
+// ---------------------------------------------------------------------------
+let allTracks  = [];
+let plTracks   = [];   // current playlist track paths
+
+async function loadLibrary() {
+  const ul = document.getElementById('lib-list');
+  ul.innerHTML = '<li style="padding:12px;color:var(--muted)">Scanning library…</li>';
+  try {
+    allTracks = await fetch('/panel/api/library').then(r=>r.json());
+    document.getElementById('lib-count').textContent = `(${allTracks.length})`;
+    renderLibrary();
+  } catch {
+    ul.innerHTML = '<li style="padding:12px;color:var(--muted)">Failed to load library.</li>';
+  }
+}
+
+function renderLibrary() {
+  const q   = document.getElementById('lib-search').value.toLowerCase();
+  const ul  = document.getElementById('lib-list');
+  const set = new Set(plTracks);
+  const filtered = q ? allTracks.filter(t => t.display.toLowerCase().includes(q)) : allTracks;
+  if (!filtered.length) { ul.innerHTML='<li style="padding:12px;color:var(--muted)">No matches.</li>'; return; }
+  ul.innerHTML = filtered.slice(0, 500).map(t => {
+    const inPl = set.has(t.path);
+    return `<li class="${inPl?'in-playlist':''}" data-path="${esc(t.path)}" title="${esc(t.display)}">
+      <span class="lib-file">${esc(t.display)}</span>
+      <span class="lib-add">${inPl?'✓':'＋'}</span>
+    </li>`;
+  }).join('');
+  ul.querySelectorAll('li').forEach(li => {
+    li.addEventListener('click', () => addTrack(li.dataset.path));
+  });
+}
+
+document.getElementById('lib-search').addEventListener('input', renderLibrary);
+
+function addTrack(path) {
+  if (!plTracks.includes(path)) {
+    plTracks.push(path);
+    renderPlaylist();
+    renderLibrary();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Playlist editor
+// ---------------------------------------------------------------------------
+function renderPlaylist() {
+  const ul = document.getElementById('track-list');
+  if (!plTracks.length) {
+    ul.innerHTML = '<li style="padding:12px;color:var(--muted)">Add tracks from the library →</li>';
+    return;
+  }
+  ul.innerHTML = plTracks.map((p,i) => `
+    <li data-i="${i}">
+      <span class="track-name" title="${esc(p)}">${esc(basename(p))}</span>
+      <div class="track-btns">
+        <button class="up"  title="Move up">↑</button>
+        <button class="dn"  title="Move down">↓</button>
+        <button class="rm"  title="Remove">×</button>
+      </div>
+    </li>`).join('');
+  ul.querySelectorAll('li').forEach(li => {
+    const i = parseInt(li.dataset.i);
+    li.querySelector('.up').addEventListener('click', () => moveTrack(i, -1));
+    li.querySelector('.dn').addEventListener('click', () => moveTrack(i,  1));
+    li.querySelector('.rm').addEventListener('click', () => removeTrack(i));
+  });
+}
+
+function moveTrack(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= plTracks.length) return;
+  [plTracks[i], plTracks[j]] = [plTracks[j], plTracks[i]];
+  renderPlaylist();
+}
+function removeTrack(i) {
+  plTracks.splice(i, 1);
+  renderPlaylist();
+  renderLibrary();
+}
+
+// ---------------------------------------------------------------------------
+// Saved playlists list
+// ---------------------------------------------------------------------------
+let schedule = [];
+
+async function loadSavedPlaylists() {
+  const [names, sched] = await Promise.all([
+    fetch('/panel/api/playlists').then(r=>r.json()),
+    fetch('/panel/api/schedule').then(r=>r.json()),
+  ]);
+  schedule = sched;
+  const ul  = document.getElementById('saved-list');
+  const map = Object.fromEntries(sched.map(e=>[e.name,e.time]));
+  if (!names.length) { ul.innerHTML='<li><span class="empty">None yet.</span></li>'; return; }
+  ul.innerHTML = names.map(n => `
+    <li>
+      <span class="saved-name" data-name="${esc(n)}">${esc(n)}</span>
+      ${map[n]?`<span class="saved-time">${esc(map[n])}</span>`:''}
+    </li>`).join('');
+  ul.querySelectorAll('.saved-name').forEach(el => {
+    el.addEventListener('click', () => openPlaylist(el.dataset.name));
+  });
+}
+
+async function openPlaylist(name) {
+  document.getElementById('pl-name').value = name;
+  document.getElementById('pl-name-label').textContent = name;
+  const tracks = await fetch(`/panel/api/playlists/${encodeURIComponent(name)}`).then(r=>r.json());
+  plTracks = tracks;
+  const sched = schedule.find(e=>e.name===name);
+  document.getElementById('pl-time').value = sched?.time || '';
+  renderPlaylist();
+  renderLibrary();
+}
+
+document.getElementById('pl-load-btn').addEventListener('click', () => {
+  const name = document.getElementById('pl-name').value.trim();
+  if (name) openPlaylist(name);
+});
+
+document.getElementById('pl-new-btn').addEventListener('click', () => {
+  document.getElementById('pl-name').value = '';
+  document.getElementById('pl-name-label').textContent = 'untitled';
+  document.getElementById('pl-time').value = '';
+  plTracks = [];
+  renderPlaylist();
+  renderLibrary();
+});
+
+// ---------------------------------------------------------------------------
+// Save / Delete playlist
+// ---------------------------------------------------------------------------
+document.getElementById('pl-save-btn').addEventListener('click', async () => {
+  const btn  = document.getElementById('pl-save-btn');
+  const name = document.getElementById('pl-name').value.trim();
+  if (!name) { flash(document.getElementById('pl-st'),'Enter a playlist name','err'); return; }
+  btn.disabled = true;
+  try {
+    const res  = await fetch(`/panel/api/playlists/${encodeURIComponent(name)}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tracks: plTracks, time: document.getElementById('pl-time').value.trim() }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('pl-name').value = data.name;
+      document.getElementById('pl-name-label').textContent = data.name;
+      flash(document.getElementById('pl-st'),'✓ Saved','ok');
+      document.getElementById('restart-banner').classList.add('show');
+      loadSavedPlaylists();
+    } else {
+      flash(document.getElementById('pl-st'),'✗ '+(data.error||'Failed'),'err');
+    }
+  } catch { flash(document.getElementById('pl-st'),'✗ Network error','err'); }
+  btn.disabled = false;
+});
+
+document.getElementById('pl-delete-btn').addEventListener('click', async () => {
+  const name = document.getElementById('pl-name').value.trim();
+  if (!name || !confirm(`Delete playlist "${name}"?`)) return;
+  await fetch(`/panel/api/playlists/${encodeURIComponent(name)}`,{method:'DELETE'});
+  document.getElementById('pl-name').value='';
+  document.getElementById('pl-name-label').textContent='untitled';
+  plTracks=[]; renderPlaylist();
+  flash(document.getElementById('pl-st'),'Deleted','ok');
+  loadSavedPlaylists();
+});
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+loadSettings();
+loadHistory();
+refreshLive();
+setInterval(refreshLive, 10000);
+setInterval(loadHistory, 30000);
 </script>
 </body>
 </html>
