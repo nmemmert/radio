@@ -21,7 +21,7 @@ def clean_meta(m) =
   title =
     if title == "" then
       base = list.last(default="", string.split(separator="/", fname))
-      fst(default=base, string.split(separator=".", base))
+      list.hd(default=base, string.split(separator=".", base))
     else
       title
     end
