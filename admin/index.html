@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radio Admin</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:       #0f0f13;
+    --surface:  rgba(255,255,255,0.04);
+    --border:   rgba(255,255,255,0.08);
+    --accent:   #6c5ce7;
+    --accent-h: #7d70ea;
+    --muted:    #9a9aa5;
+    --green:    #2ecc71;
+    --red:      #e74c3c;
+    --text:     #f2f2f5;
+    --radius:   14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(160deg, var(--bg) 0%, #1a1a24 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  header { margin-bottom: 32px; }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header p  { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent); margin-bottom: 18px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type="text"], input[type="url"], input[type="number"] {
+    width: 100%; padding: 9px 12px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06); color: var(--text);
+    font-size: 14px; outline: none; transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--accent); }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+  .row { display: flex; gap: 12px; }
+  .row .field { flex: 1; }
+
+  /* Live section */
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .stat {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; word-break: break-word; }
+  .stat-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 6px; }
+  .dot.live { background: var(--green); box-shadow: 0 0 7px var(--green); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-primary   { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.07); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+  .btn-danger { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.25); }
+  .btn-danger:hover { background: rgba(231,76,60,0.25); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+  .save-status { font-size: 13px; color: var(--muted); }
+  .save-status.ok  { color: var(--green); }
+  .save-status.err { color: var(--red); }
+
+  /* Restart banner */
+  .restart-banner {
+    display: none; align-items: center; gap: 10px;
+    background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.3);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 13px; color: var(--muted);
+  }
+  .restart-banner.show { display: flex; }
+  .restart-banner strong { color: var(--text); }
+
+  /* History */
+  .history-list { list-style: none; }
+  .history-list li {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 8px 0; border-top: 1px solid var(--border);
+    font-size: 13px; gap: 12px;
+  }
+  .history-list li:first-child { border-top: none; }
+  .h-track { flex: 1; min-width: 0; }
+  .h-title  { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-artist { color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .h-ts     { color: var(--muted); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+  .empty    { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Radio Admin</h1>
+    <p>Station management — <a href="/" style="color:var(--accent);text-decoration:none">← Back to player</a></p>
+  </header>
+
+  <div class="restart-banner" id="restart-banner">
+    <span>⚡</span>
+    <span><strong>Restart the liquidsoap container</strong> to apply saved settings: <code style="color:var(--accent)">docker compose restart liquidsoap</code></span>
+  </div>
+
+  <!-- Live -->
+  <div class="card">
+    <div class="card-title">Live</div>
+    <div class="live-grid">
+      <div class="stat">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" id="live-status"><span class="dot" id="live-dot"></span><span id="live-status-text">—</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Listeners</div>
+        <div class="stat-value" id="live-listeners">—</div>
+      </div>
+      <div class="stat" style="grid-column:1/-1">
+        <div class="stat-label">Now Playing</div>
+        <div class="stat-value" id="live-title" style="font-size:15px">—</div>
+        <div class="stat-sub" id="live-artist"></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="skip-btn">&#9654;&#9654; Skip Track</button>
+    <span class="save-status" id="skip-status"></span>
+  </div>
+
+  <!-- Station Identity -->
+  <div class="card">
+    <div class="card-title">Station Identity</div>
+    <div class="field">
+      <label>Station Name</label>
+      <input type="text" id="STATION_NAME" placeholder="My Radio">
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="STATION_DESCRIPTION" placeholder="Personal music stream">
+    </div>
+    <div class="field">
+      <label>Genre</label>
+      <input type="text" id="GENRE" placeholder="Various">
+    </div>
+  </div>
+
+  <!-- Stream -->
+  <div class="card">
+    <div class="card-title">Stream</div>
+    <div class="field" style="max-width:200px">
+      <label>Crossfade Duration (seconds)</label>
+      <input type="number" id="CROSSFADE_DURATION" min="0" max="15" step="0.5" placeholder="3">
+      <div class="hint">Set to 0 to disable crossfading between tracks.</div>
+    </div>
+  </div>
+
+  <!-- Podcast -->
+  <div class="card">
+    <div class="card-title">Podcast</div>
+    <div class="field">
+      <label>RSS Feed URL</label>
+      <input type="url" id="PODCAST_FEED_URL" placeholder="https://feeds.example.com/mypodcast">
+      <div class="hint">Leave blank to keep music-only. Liquidsoap fetches episode enclosures from this feed.</div>
+    </div>
+    <div class="field" style="max-width:220px">
+      <label>Schedule Window</label>
+      <input type="text" id="PODCAST_TIME" placeholder="8h-9h">
+      <div class="hint">Liquidsoap time predicate, e.g. <code>8h-9h</code> airs episodes 8–9am daily. Leave blank to disable.</div>
+    </div>
+  </div>
+
+  <!-- Save -->
+  <div class="actions">
+    <button class="btn btn-primary" id="save-btn">Save Settings</button>
+    <span class="save-status" id="save-status"></span>
+  </div>
+
+  <!-- History -->
+  <div class="card" style="margin-top:32px">
+    <div class="card-title">Recently Played</div>
+    <ul class="history-list" id="history-list">
+      <li><span class="empty">Loading…</span></li>
+    </ul>
+  </div>
+
+</div>
+<script>
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function flash(el, msg, cls, ms=3000) {
+    el.textContent = msg; el.className = 'save-status ' + cls;
+    setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, ms);
+  }
+  function fmtTime(iso) {
+    try {
+      const d = new Date(iso.replace(' ','T') + 'Z');
+      return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    } catch { return iso; }
+  }
+
+  // -------------------------------------------------------------------------
+  // Settings
+  // -------------------------------------------------------------------------
+  const KEYS = ['STATION_NAME','STATION_DESCRIPTION','GENRE','CROSSFADE_DURATION','PODCAST_FEED_URL','PODCAST_TIME'];
+
+  async function loadSettings() {
+    const res  = await fetch('/panel/api/settings');
+    const data = await res.json();
+    KEYS.forEach(k => { const el = document.getElementById(k); if (el) el.value = data[k] ?? ''; });
+  }
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    const payload = {};
+    KEYS.forEach(k => { payload[k] = (document.getElementById(k)?.value ?? '').trim(); });
+    try {
+      const res = await fetch('/panel/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        flash(document.getElementById('save-status'), '✓ Saved', 'ok');
+        document.getElementById('restart-banner').classList.add('show');
+      } else {
+        flash(document.getElementById('save-status'), '✗ ' + (data.error || 'Failed'), 'err');
+      }
+    } catch (e) {
+      flash(document.getElementById('save-status'), '✗ Network error', 'err');
+    }
+    btn.disabled = false;
+  });
+
+  // -------------------------------------------------------------------------
+  // Skip
+  // -------------------------------------------------------------------------
+  document.getElementById('skip-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('skip-btn');
+    btn.disabled = true;
+    try {
+      const res  = await fetch('/panel/api/skip', { method: 'POST' });
+      const data = await res.json();
+      flash(document.getElementById('skip-status'), data.ok ? '✓ Skipped' : '✗ ' + (data.result || 'Failed'), data.ok ? 'ok' : 'err');
+    } catch {
+      flash(document.getElementById('skip-status'), '✗ Network error', 'err');
+    }
+    btn.disabled = false;
+  });
+
+  // -------------------------------------------------------------------------
+  // History
+  // -------------------------------------------------------------------------
+  async function loadHistory() {
+    const res  = await fetch('/panel/api/history');
+    const data = await res.json();
+    const ul   = document.getElementById('history-list');
+    if (!data.length) {
+      ul.innerHTML = '<li><span class="empty">Nothing played yet.</span></li>';
+      return;
+    }
+    ul.innerHTML = data.map(t => `
+      <li>
+        <div class="h-track">
+          <div class="h-title">${esc(t.title || '—')}</div>
+          ${t.artist ? `<div class="h-artist">${esc(t.artist)}</div>` : ''}
+        </div>
+        <div class="h-ts">${fmtTime(t.ts)}</div>
+      </li>`).join('');
+  }
+
+  // -------------------------------------------------------------------------
+  // Live status (polls Icecast's own JSON endpoint — same server, no CORS)
+  // -------------------------------------------------------------------------
+  async function refreshLive() {
+    try {
+      const res    = await fetch('/status-json.xsl', { cache: 'no-store' });
+      const data   = await res.json();
+      let source   = data.icestats?.source;
+      if (Array.isArray(source)) source = source.find(s => s.listenurl?.endsWith('/stream')) || source[0];
+
+      const dot  = document.getElementById('live-dot');
+      const stEl = document.getElementById('live-status-text');
+      if (source) {
+        dot.classList.add('live'); stEl.textContent = 'Live';
+        document.getElementById('live-listeners').textContent = (source.listeners ?? 0) + ' listener' + (source.listeners === 1 ? '' : 's');
+
+        let title  = source.title  || '';
+        let artist = source.artist || '';
+        if (!artist && title.includes(' - ')) { [artist, title] = title.split(' - ', 2); }
+        document.getElementById('live-title').textContent  = title  || '—';
+        document.getElementById('live-artist').textContent = artist || '';
+      } else {
+        dot.classList.remove('live'); stEl.textContent = 'Offline';
+        document.getElementById('live-listeners').textContent = '—';
+        document.getElementById('live-title').textContent  = '—';
+        document.getElementById('live-artist').textContent = '';
+      }
+    } catch {
+      document.getElementById('live-status-text').textContent = 'Unavailable';
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Init
+  // -------------------------------------------------------------------------
+  loadSettings();
+  loadHistory();
+  refreshLive();
+  setInterval(refreshLive,  10000);
+  setInterval(loadHistory,  30000);
+</script>
+</body>
+</html>

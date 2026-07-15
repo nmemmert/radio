@@ -6,6 +6,7 @@ on:
     paths:
       - "icecast/**"
       - "liquidsoap/**"
+      - "admin/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -23,6 +24,8 @@ jobs:
             image: radio-icecast
           - context: ./liquidsoap
             image: radio-liquidsoap
+          - context: ./admin
+            image: radio-admin
     steps:
       - uses: actions/checkout@v4
 

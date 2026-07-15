@@ -1,5 +1,7 @@
 FROM savonet/liquidsoap:v2.4.5
 
 COPY radio.liq /tmp/radio.liq
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["liquidsoap", "/tmp/radio.liq"]
+ENTRYPOINT ["/entrypoint.sh"]

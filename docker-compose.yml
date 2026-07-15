@@ -14,6 +14,9 @@ services:
       - target: 8000
         published: "8000"
         protocol: tcp
+      - target: 8080
+        published: "8080"
+        protocol: tcp
     x-casaos:
       envs:
         - container: ICECAST_HOSTNAME
@@ -27,14 +30,17 @@ services:
             en_us: "Password for Icecast relay servers (unused unless you add one - set to any random value)"
         - container: ICECAST_ADMIN_USER
           description:
-            en_us: "Username for the Icecast admin panel"
+            en_us: "Username for the Icecast admin panel and radio admin panel"
         - container: ICECAST_ADMIN_PASSWORD
           description:
-            en_us: "Password for the Icecast admin panel"
+            en_us: "Password for the Icecast admin panel and radio admin panel"
       ports:
         - container: "8000"
           description:
             en_us: "Icecast stream and status page - point your reverse proxy here"
+        - container: "8080"
+          description:
+            en_us: "Radio admin panel - accessible at /panel/ (optionally proxy this too)"
       volumes: []
     cap_add: []
     privileged: false
@@ -48,16 +54,27 @@ services:
     network_mode: "service:icecast"
     environment:
       - ICECAST_SOURCE_PASSWORD=changeme-source
+      - PODCAST_FEED_URL=
+      - PODCAST_TIME=
     volumes:
       - type: bind
         source: /DATA/Media/Music
         target: /music
         read_only: true
+      - type: volume
+        source: radio-config
+        target: /config
     x-casaos:
       envs:
         - container: ICECAST_SOURCE_PASSWORD
           description:
             en_us: "Must match the icecast service's ICECAST_SOURCE_PASSWORD above"
+        - container: PODCAST_FEED_URL
+          description:
+            en_us: "RSS feed URL for your podcast (leave blank to disable podcast scheduling)"
+        - container: PODCAST_TIME
+          description:
+            en_us: "Time window to air podcast episodes, e.g. 8h-9h for 8-9am daily (leave blank to disable)"
       ports: []
       volumes:
         - container: /music
@@ -65,6 +82,36 @@ services:
             en_us: "Your music library (mp3/flac/etc), mounted read-only"
     cap_add: []
     privileged: false
+
+  admin:
+    container_name: radio-admin
+    image: ghcr.io/nmemmert/radio-admin:latest
+    restart: unless-stopped
+    depends_on:
+      - icecast
+    network_mode: "service:icecast"
+    environment:
+      - ICECAST_ADMIN_USER=admin
+      - ICECAST_ADMIN_PASSWORD=changeme-admin
+    volumes:
+      - type: volume
+        source: radio-config
+        target: /config
+    x-casaos:
+      envs:
+        - container: ICECAST_ADMIN_USER
+          description:
+            en_us: "Must match the icecast service's ICECAST_ADMIN_USER"
+        - container: ICECAST_ADMIN_PASSWORD
+          description:
+            en_us: "Must match the icecast service's ICECAST_ADMIN_PASSWORD"
+      ports: []
+      volumes: []
+    cap_add: []
+    privileged: false
+
+volumes:
+  radio-config:
 
 x-casaos:
   architectures:
@@ -76,6 +123,7 @@ x-casaos:
     en_US: >
       Streams your personal music library as a single continuous, shuffled
       Icecast radio station that any device can tune into over the internet.
+      Includes a web player at port 8000 and an admin panel at port 8080/panel/.
   developer: nmemmert
   main: icecast
   port_map: "8000"

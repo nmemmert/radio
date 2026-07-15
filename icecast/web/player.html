@@ -19,80 +19,105 @@
   }
   .player {
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     margin: 24px;
     padding: 32px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     text-align: center;
   }
-  h1 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    font-weight: 600;
-  }
-  .description {
-    margin: 0 0 28px;
-    min-height: 18px;
-    font-size: 14px;
-    color: #9a9aa5;
-  }
-  .play-button {
-    width: 84px;
-    height: 84px;
-    border-radius: 50%;
-    border: none;
-    background: #6c5ce7;
-    color: white;
-    font-size: 26px;
-    cursor: pointer;
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+  .description { margin: 0 0 28px; min-height: 18px; font-size: 14px; color: #9a9aa5; }
+
+  .controls {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 24px;
-    transition: transform 0.15s ease, background 0.15s ease;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .play-button {
+    width: 84px; height: 84px;
+    border-radius: 50%; border: none;
+    background: #6c5ce7; color: white;
+    font-size: 26px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, background 0.15s;
   }
   .play-button:hover { background: #7d70ea; }
   .play-button:active { transform: scale(0.95); }
-  .now-playing { min-height: 44px; margin-bottom: 20px; }
+
+  .skip-button {
+    width: 44px; height: 44px;
+    border-radius: 50%; border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06); color: #9a9aa5;
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .skip-button:hover { background: rgba(255,255,255,0.1); color: #f2f2f5; }
+
+  .now-playing { min-height: 54px; margin-bottom: 20px; }
   .now-playing .label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #6c5ce7;
-    margin-bottom: 6px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #6c5ce7; margin-bottom: 6px;
   }
-  .now-playing .track {
-    font-size: 16px;
-    font-weight: 500;
-    word-break: break-word;
-  }
+  .now-playing .track-title { font-size: 16px; font-weight: 600; word-break: break-word; }
+  .now-playing .track-artist { font-size: 13px; color: #9a9aa5; margin-top: 3px; word-break: break-word; }
+
   .meta {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    font-size: 13px;
-    color: #9a9aa5;
-    margin-bottom: 20px;
+    display: flex; justify-content: center; gap: 16px;
+    font-size: 13px; color: #9a9aa5; margin-bottom: 20px;
   }
   .status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #555;
-    margin-right: 6px;
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: #555; margin-right: 6px;
   }
   .status-dot.live { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
-  .volume {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-  }
+
+  .volume { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 28px; }
   .volume input[type="range"] { width: 140px; }
+
+  .history { text-align: left; }
+  .history-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #6c5ce7; margin-bottom: 10px;
+  }
+  .history-list { list-style: none; margin: 0; padding: 0; }
+  .history-list li {
+    padding: 6px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px; color: #9a9aa5;
+  }
+  .history-list li .h-title { color: #f2f2f5; }
+  .history-list li .h-artist { margin-left: 4px; }
+
+  /* Skip modal */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #1a1a24; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 24px; width: 280px; text-align: center;
+  }
+  .modal h2 { margin: 0 0 16px; font-size: 16px; }
+  .modal input {
+    width: 100%; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+    color: #f2f2f5; font-size: 14px; margin-bottom: 12px;
+  }
+  .modal-buttons { display: flex; gap: 8px; justify-content: center; }
+  .modal-buttons button {
+    padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px;
+  }
+  .btn-confirm { background: #6c5ce7; color: #fff; }
+  .btn-cancel  { background: rgba(255,255,255,0.08); color: #f2f2f5; }
+  .modal-error { font-size: 12px; color: #e74c3c; margin-top: 6px; min-height: 16px; }
 </style>
 </head>
 <body>
@@ -100,11 +125,16 @@
     <h1 id="station-name">Radio</h1>
     <p class="description" id="station-description"></p>
 
-    <button class="play-button" id="play-button" aria-label="Play">&#9654;</button>
+    <div class="controls">
+      <div style="width:44px"></div><!-- spacer -->
+      <button class="play-button" id="play-button" aria-label="Play">&#9654;</button>
+      <button class="skip-button" id="skip-button" title="Skip track">&#9654;&#9654;</button>
+    </div>
 
     <div class="now-playing">
       <div class="label">Now Playing</div>
-      <div class="track" id="track">&mdash;</div>
+      <div class="track-title" id="track-title">&mdash;</div>
+      <div class="track-artist" id="track-artist"></div>
     </div>
 
     <div class="meta">
@@ -116,31 +146,56 @@
       <span>&#128266;</span>
       <input type="range" id="volume" min="0" max="100" value="80">
     </div>
+
+    <div class="history">
+      <div class="history-label">Recently Played</div>
+      <ul class="history-list" id="history-list">
+        <li style="color:#555;border-top:none">Nothing yet</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Skip password modal -->
+  <div class="modal-backdrop" id="skip-modal">
+    <div class="modal">
+      <h2>Skip Track</h2>
+      <input type="password" id="skip-password" placeholder="Admin password" autocomplete="current-password">
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="skip-cancel">Cancel</button>
+        <button class="btn-confirm" id="skip-confirm">Skip</button>
+      </div>
+      <div class="modal-error" id="skip-error"></div>
+    </div>
   </div>
 
   <audio id="audio" preload="none"></audio>
 
   <script>
-    const audio = document.getElementById('audio');
-    const playButton = document.getElementById('play-button');
+    const audio        = document.getElementById('audio');
+    const playButton   = document.getElementById('play-button');
     const volumeSlider = document.getElementById('volume');
-    const trackEl = document.getElementById('track');
-    const stationName = document.getElementById('station-name');
-    const stationDescription = document.getElementById('station-description');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const listenersEl = document.getElementById('listeners');
+    const titleEl      = document.getElementById('track-title');
+    const artistEl     = document.getElementById('track-artist');
+    const stationName  = document.getElementById('station-name');
+    const stationDesc  = document.getElementById('station-description');
+    const statusDot    = document.getElementById('status-dot');
+    const statusText   = document.getElementById('status-text');
+    const listenersEl  = document.getElementById('listeners');
+    const historyList  = document.getElementById('history-list');
+
+    const skipBtn      = document.getElementById('skip-button');
+    const skipModal    = document.getElementById('skip-modal');
+    const skipPassword = document.getElementById('skip-password');
+    const skipConfirm  = document.getElementById('skip-confirm');
+    const skipCancel   = document.getElementById('skip-cancel');
+    const skipError    = document.getElementById('skip-error');
 
     audio.volume = volumeSlider.value / 100;
 
     let playing = false;
 
     playButton.addEventListener('click', () => {
-      if (playing) {
-        audio.pause();
-        return;
-      }
-      // Always reconnect fresh so we join the live stream, not a stale buffer.
+      if (playing) { audio.pause(); return; }
       audio.src = '/stream?_=' + Date.now();
       audio.play().catch(() => {});
     });
@@ -150,42 +205,119 @@
       playButton.innerHTML = '&#10074;&#10074;';
       playButton.setAttribute('aria-label', 'Pause');
     });
-
     audio.addEventListener('pause', () => {
       playing = false;
       playButton.innerHTML = '&#9654;';
       playButton.setAttribute('aria-label', 'Play');
     });
 
-    volumeSlider.addEventListener('input', () => {
-      audio.volume = volumeSlider.value / 100;
+    volumeSlider.addEventListener('input', () => { audio.volume = volumeSlider.value / 100; });
+
+    // -----------------------------------------------------------------------
+    // Skip
+    // -----------------------------------------------------------------------
+    skipBtn.addEventListener('click', () => {
+      skipPassword.value = '';
+      skipError.textContent = '';
+      skipModal.classList.add('open');
+      skipPassword.focus();
     });
+    skipCancel.addEventListener('click', () => skipModal.classList.remove('open'));
+    skipModal.addEventListener('click', e => { if (e.target === skipModal) skipModal.classList.remove('open'); });
+
+    skipConfirm.addEventListener('click', async () => {
+      const pw = skipPassword.value;
+      if (!pw) { skipError.textContent = 'Enter the admin password.'; return; }
+      try {
+        // Icecast's admin skip endpoint (kills the source, Liquidsoap reconnects on next track).
+        const url = `/admin/killsource?mount=/stream`;
+        const res = await fetch(url, {
+          headers: { 'Authorization': 'Basic ' + btoa('admin:' + pw) }
+        });
+        if (res.ok || res.status === 200) {
+          skipModal.classList.remove('open');
+        } else {
+          skipError.textContent = 'Wrong password or skip failed.';
+        }
+      } catch {
+        skipError.textContent = 'Could not reach admin endpoint.';
+      }
+    });
+
+    skipPassword.addEventListener('keydown', e => { if (e.key === 'Enter') skipConfirm.click(); });
+
+    // -----------------------------------------------------------------------
+    // History
+    // -----------------------------------------------------------------------
+    const recentTracks = [];
+
+    function addToHistory(artist, title) {
+      const key = artist + '|' + title;
+      if (recentTracks[0] === key) return; // same track, ignore
+      recentTracks.unshift(key);
+      if (recentTracks.length > 10) recentTracks.pop();
+
+      historyList.innerHTML = recentTracks.map(k => {
+        const [a, t] = k.split('|');
+        return `<li><span class="h-title">${esc(t)}</span>${a ? `<span class="h-artist">— ${esc(a)}</span>` : ''}</li>`;
+      }).join('');
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // -----------------------------------------------------------------------
+    // Status poll
+    // -----------------------------------------------------------------------
+    let lastTrackKey = '';
 
     async function refreshStatus() {
       try {
-        const res = await fetch('/status-json.xsl', { cache: 'no-store' });
+        const res  = await fetch('/status-json.xsl', { cache: 'no-store' });
         const data = await res.json();
         let source = data.icestats && data.icestats.source;
         if (Array.isArray(source)) {
-          source = source.find((s) => s.listenurl && s.listenurl.endsWith('/stream')) || source[0];
+          source = source.find(s => s.listenurl && s.listenurl.endsWith('/stream')) || source[0];
         }
-
         if (source) {
           stationName.textContent = source.server_name || 'Radio';
-          stationDescription.textContent = source.server_description || '';
-          trackEl.textContent = source.title || '—';
+          stationDesc.textContent = source.server_description || '';
+
+          // Icecast sends "Artist - Title" in server_name or separate fields.
+          // Liquidsoap maps artist→artist, title→title in the stream metadata.
+          const rawTitle  = source.title  || '';
+          const rawArtist = source.artist || '';
+
+          // Some Icecast builds pack "Artist - Title" into title when no artist field exists.
+          let artist = rawArtist;
+          let title  = rawTitle;
+          if (!artist && title.includes(' - ')) {
+            [artist, title] = title.split(' - ', 2);
+          }
+
+          titleEl.textContent  = title  || '—';
+          artistEl.textContent = artist || '';
+
+          const key = artist + '|' + title;
+          if (key !== lastTrackKey && title) {
+            addToHistory(artist, title);
+            lastTrackKey = key;
+          }
+
           const listeners = source.listeners ?? 0;
           listenersEl.textContent = listeners + (listeners === 1 ? ' listener' : ' listeners');
           statusDot.classList.add('live');
           statusText.textContent = 'Live';
         } else {
-          stationDescription.textContent = '';
-          trackEl.textContent = '—';
-          listenersEl.textContent = '';
+          stationDesc.textContent  = '';
+          titleEl.textContent      = '—';
+          artistEl.textContent     = '';
+          listenersEl.textContent  = '';
           statusDot.classList.remove('live');
           statusText.textContent = 'Offline';
         }
-      } catch (err) {
+      } catch {
         statusDot.classList.remove('live');
         statusText.textContent = 'Unavailable';
       }

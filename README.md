@@ -3,15 +3,16 @@
 Streams your music library as a single continuous, shuffled Icecast stream — like a real radio
 station that anyone can tune into. Built with:
 
-- **Liquidsoap** — shuffles your library and feeds a continuous stream to Icecast (no crossfade
-  for now — the Liquidsoap version pinned here doesn't ship the smart-crossfade helper the docs
-  advertise; tracks play back-to-back instead. Can be revisited later).
+- **Liquidsoap** — shuffles your library, crossfades between tracks, and feeds a continuous stream
+  to Icecast. Reads artist/title from ID3 tags. Optionally pulls your podcast RSS feed and airs
+  episodes on a daily schedule.
 - **Icecast** — serves that stream to listeners at a public mount point.
 - **Nginx Proxy Manager (NPM)** — terminates HTTPS and proxies your domain to Icecast (assumed
   already running on your ZimaOS box).
-- **Web player** (`icecast/web/player.html`) — a small self-contained page baked into the Icecast
-  image and served at the site root. Play/pause, volume, live "now playing" and listener count
-  (polled from Icecast's own `/status-json.xsl`, same origin, no extra backend needed).
+- **Web player** (`icecast/web/player.html`) — self-contained page served at the site root.
+  Play/pause, skip (password-protected), volume, live "now playing" with separate artist/title,
+  listener count, and a "recently played" history — all polled from Icecast's `/status-json.xsl`,
+  no extra backend needed.
 
 Listeners can just hit `https://radio.yourdomain.com/` for the player, or use the raw stream URL
 directly in VLC, phone radio apps, etc.
@@ -59,6 +60,11 @@ Before installing, edit these in `docker-compose.yml`:
   - `ICECAST_RELAY_PASSWORD` — any random value (unused unless you add a relay).
   - `ICECAST_ADMIN_USER` / `ICECAST_ADMIN_PASSWORD` — credentials for the Icecast admin panel.
 - `liquidsoap.environment.ICECAST_SOURCE_PASSWORD` — same value as icecast's above.
+- `liquidsoap.environment.PODCAST_FEED_URL` *(optional)* — the RSS feed URL for your podcast.
+  When set, Liquidsoap will pull episode enclosures from the feed and play them during the
+  scheduled window. Leave blank to keep music-only.
+- `liquidsoap.environment.PODCAST_TIME` *(optional)* — Liquidsoap time predicate for when to air
+  podcast episodes, e.g. `8h-9h` plays them 8–9am every day. Leave blank to disable.
 - `liquidsoap.volumes[0].source` — absolute path on the ZimaOS host to your music library
   (default placeholder: `/DATA/Media/Music`). Mixed mp3/flac/etc is fine.
 
