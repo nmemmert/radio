@@ -11,7 +11,7 @@ def on_track_change(m) =
   artist = m["artist"]
   title  = m["title"]
   ts     = time.string(time=time())
-  ignore(file.write(append=true, "/config/history.log", "#{ts} | #{artist} | #{title}\n"))
+  ignore(file.write(append=true, data="#{ts} | #{artist} | #{title}\n", "/config/history.log"))
 end
 
 radio.on_track(on_track_change)
