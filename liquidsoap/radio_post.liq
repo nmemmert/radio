@@ -14,7 +14,7 @@ def on_track_change(m) =
   ignore(file.write(append=true, data="#{ts} | #{artist} | #{title}\n", "/config/history.log"))
 end
 
-radio.on_track(on_track_change)
+radio.on_track(synchronous=false, on_track_change)
 
 output.icecast(
   %mp3(bitrate=192),
