@@ -4,6 +4,7 @@ import json
 import os
 import re
 import socket
+import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -153,6 +154,64 @@ def upsert_schedule(name, time_str):
 # Liquidsoap skip
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Icecast proxy — admin shares icecast's network namespace so localhost:8000
+# is always Icecast, regardless of what external port the host exposes.
+# ---------------------------------------------------------------------------
+
+ICECAST_ORIGIN = "http://127.0.0.1:8000"
+
+# Paths that should be transparently proxied to Icecast.
+PROXY_PREFIXES = ("/stream", "/status-json.xsl", "/status.xsl", "/admin/")
+
+def _proxy(handler, path):
+    url = ICECAST_ORIGIN + path
+    try:
+        req = urllib.request.Request(url)
+        # Forward basic auth header if present (needed for /admin/ endpoints)
+        auth_hdr = handler.headers.get("Authorization")
+        if auth_hdr:
+            req.add_header("Authorization", auth_hdr)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = resp.read()
+            handler.send_response(resp.status)
+            for k, v in resp.headers.items():
+                if k.lower() in ("content-type", "content-length", "cache-control",
+                                  "icy-metaint", "icy-name", "icy-description",
+                                  "icy-genre", "icy-br", "icy-pub"):
+                    handler.send_header(k, v)
+            handler.send_header("Access-Control-Allow-Origin", "*")
+            handler.end_headers()
+            handler.wfile.write(body)
+    except Exception as e:
+        handler.send_response(502)
+        handler.end_headers()
+        handler.wfile.write(str(e).encode())
+
+def _proxy_stream(handler, path):
+    """Streaming proxy for /stream — pipes bytes as they arrive."""
+    url = ICECAST_ORIGIN + path
+    try:
+        with urllib.request.urlopen(url, timeout=None) as resp:
+            handler.send_response(200)
+            for k, v in resp.headers.items():
+                if k.lower() in ("content-type", "transfer-encoding",
+                                  "icy-metaint", "icy-name", "icy-description",
+                                  "icy-genre", "icy-br", "icy-pub"):
+                    handler.send_header(k, v)
+            handler.send_header("Cache-Control", "no-cache")
+            handler.end_headers()
+            while True:
+                chunk = resp.read(4096)
+                if not chunk:
+                    break
+                handler.wfile.write(chunk)
+                handler.wfile.flush()
+    except (BrokenPipeError, ConnectionResetError):
+        pass  # client disconnected
+    except Exception:
+        pass
+
 def liquidsoap_cmd(cmd):
     try:
         with socket.create_connection(("127.0.0.1", 1234), timeout=3) as s:
@@ -205,6 +264,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         p = self._path()
+
+        # Proxy Icecast endpoints transparently
+        if any(p == pfx or p.startswith(pfx) for pfx in PROXY_PREFIXES):
+            if p.startswith("/stream"):
+                _proxy_stream(self, self.path)  # include query string for cache-busting
+            else:
+                _proxy(self, p)
+            return
 
         # Public routes — no auth required
         if p in ("/", "/index.html"):
