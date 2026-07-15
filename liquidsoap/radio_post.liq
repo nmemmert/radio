@@ -1,7 +1,7 @@
   ({true}, music)
 ])
 
-radio = fallback(track_sensitive=false, [radio, blank(duration=5.)])
+radio = fallback(track_sensitive=false, [radio, blank()])
 
 settings.server.telnet.set(true)
 settings.server.telnet.bind_addr.set("127.0.0.1")

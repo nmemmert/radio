@@ -33,7 +33,7 @@ music = map_metadata(clean_meta, music_raw)
 
 music =
   if crossfade_secs > 0.0 then
-    crossfade(duration=crossfade_secs, fade_out=crossfade_secs, fade_in=crossfade_secs, music)
+    crossfade(fade_out=crossfade_secs, fade_in=crossfade_secs, music)
   else
     music
   end
