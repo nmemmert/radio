@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import base64
+import http.client
 import json
 import os
 import re
@@ -212,6 +213,27 @@ def _proxy_stream(handler, path):
     except Exception:
         pass
 
+DOCKER_SOCK     = "/var/run/docker.sock"
+LIQUIDSOAP_NAME = os.environ.get("LIQUIDSOAP_CONTAINER", "liquidsoap")
+
+class _UnixConn(http.client.HTTPConnection):
+    def __init__(self, sock_path):
+        super().__init__("localhost")
+        self._sock_path = sock_path
+    def connect(self):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(self._sock_path)
+
+def restart_liquidsoap():
+    try:
+        conn = _UnixConn(DOCKER_SOCK)
+        conn.request("POST", f"/containers/{LIQUIDSOAP_NAME}/restart?t=3")
+        resp = conn.getresponse()
+        resp.read()
+        return resp.status in (204, 200)
+    except Exception as e:
+        return False, str(e)
+
 def liquidsoap_cmd(cmd):
     try:
         with socket.create_connection(("127.0.0.1", 1234), timeout=3) as s:
@@ -343,6 +365,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": True})
             except Exception as e:
                 self._json({"ok": False, "error": str(e)}, 400)
+
+        elif p == "/panel/api/restart":
+            ok = restart_liquidsoap()
+            self._json({"ok": ok})
 
         else:
             self.send_response(404); self.end_headers()

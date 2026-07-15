@@ -78,14 +78,6 @@
   .st.ok  { color: var(--green); }
   .st.err { color: var(--red); }
 
-  /* Restart banner */
-  .banner {
-    display: none; gap: 10px; align-items: flex-start;
-    background: rgba(108,92,231,.1); border: 1px solid rgba(108,92,231,.3);
-    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted);
-  }
-  .banner.show { display: flex; }
-  .banner strong { color: var(--text); }
   code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: var(--accent); }
 
   /* Live stats */
@@ -191,11 +183,6 @@
     <h1>Radio Admin</h1>
     <a href="/">← Back to player</a>
   </header>
-
-  <div class="banner" id="restart-banner">
-    <span>⚡</span>
-    <div><strong>Restart liquidsoap to apply changes:</strong> <code>docker compose restart liquidsoap</code></div>
-  </div>
 
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="settings">Settings</button>
@@ -325,6 +312,29 @@
 </div><!-- /wrap -->
 
 <script>
+// ---------------------------------------------------------------------------
+// Auto-restart Liquidsoap after schedule changes
+// ---------------------------------------------------------------------------
+async function autoRestart(statusEl) {
+  flash(statusEl, '↻ Restarting Liquidsoap…', '', 30000);
+  try {
+    await fetch('/panel/api/restart', { method: 'POST' });
+  } catch { /* fire and forget */ }
+  // Poll until stream comes back (up to 30s)
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const d = await fetch('/status-json.xsl', { cache: 'no-store' }).then(r => r.json());
+      const src = d.icestats?.source;
+      if (src && (Array.isArray(src) ? src.length : src)) {
+        flash(statusEl, '✓ Liquidsoap restarted', 'ok', 4000);
+        return;
+      }
+    } catch { /* not up yet */ }
+  }
+  flash(statusEl, '⚠ Restart sent — stream may still be coming up', '', 5000);
+}
+
 // ---------------------------------------------------------------------------
 // TimePicker
 // ---------------------------------------------------------------------------
@@ -543,7 +553,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
   try {
     const res  = await fetch('/panel/api/settings', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const data = await res.json();
-    if (data.ok) { flash(document.getElementById('save-st'),'✓ Saved','ok'); document.getElementById('restart-banner').classList.add('show'); }
+    if (data.ok) { flash(document.getElementById('save-st'),'✓ Saved','ok'); autoRestart(document.getElementById('save-st')); }
     else flash(document.getElementById('save-st'),'✗ '+(data.error||'Failed'),'err');
   } catch { flash(document.getElementById('save-st'),'✗ Network error','err'); }
   btn.disabled = false;
@@ -754,7 +764,7 @@ document.getElementById('pl-save-btn').addEventListener('click', async () => {
       document.getElementById('pl-name').value = data.name;
       document.getElementById('pl-name-label').textContent = data.name;
       flash(document.getElementById('pl-st'),'✓ Saved','ok');
-      document.getElementById('restart-banner').classList.add('show');
+      if (document.getElementById('pl-time').value) autoRestart(document.getElementById('pl-st'));
       loadSavedPlaylists();
     } else {
       flash(document.getElementById('pl-st'),'✗ '+(data.error||'Failed'),'err');
