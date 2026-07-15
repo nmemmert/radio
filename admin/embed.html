@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radio</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #13131a;
+    color: #f2f2f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .embed {
+    width: 100%; max-width: 320px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 20px; text-align: center;
+  }
+  .name   { font-size: 15px; font-weight: 700; }
+  .track  { font-size: 13px; font-weight: 500; margin: 6px 0 2px; min-height: 18px; }
+  .artist { font-size: 12px; color: #9a9aa5; min-height: 16px; }
+  .controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 14px 0 10px; }
+  .play-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: none;
+    background: #6c5ce7; color: #fff; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .play-btn:hover { background: #7d70ea; }
+  .vol { display: flex; align-items: center; gap: 6px; }
+  .vol input[type="range"] { width: 70px; -webkit-appearance: none; height: 3px; border-radius: 2px; background: rgba(255,255,255,.2); outline: none; }
+  .vol input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #6c5ce7; cursor: pointer; }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #555; margin-right: 4px; }
+  .dot.live { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+  .meta { font-size: 11px; color: #9a9aa5; }
+  a.open { display: inline-block; margin-top: 10px; font-size: 11px; color: #6c5ce7; text-decoration: none; }
+  a.open:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="embed">
+  <div class="name" id="name">Radio</div>
+  <div class="track"  id="track">—</div>
+  <div class="artist" id="artist"></div>
+  <div class="controls">
+    <div class="vol">
+      <span style="font-size:14px;color:#9a9aa5">🔈</span>
+      <input type="range" id="vol" min="0" max="100" value="80">
+    </div>
+    <button class="play-btn" id="play-btn">&#9654;</button>
+  </div>
+  <div class="meta"><span class="dot" id="dot"></span><span id="status">Connecting…</span> · <span id="listeners"></span></div>
+  <a class="open" href="/" target="_blank">Open full player ↗</a>
+</div>
+<audio id="audio" preload="none"></audio>
+<script>
+  const audio = document.getElementById('audio');
+  const btn   = document.getElementById('play-btn');
+  const vol   = document.getElementById('vol');
+  audio.volume = 0.8;
+  let playing = false;
+
+  btn.addEventListener('click', () => {
+    if (playing) { audio.pause(); return; }
+    audio.src = '/stream?_=' + Date.now();
+    audio.play().catch(()=>{});
+  });
+  audio.addEventListener('playing', () => { playing=true; btn.innerHTML='&#10074;&#10074;'; });
+  audio.addEventListener('pause',   () => { playing=false; btn.innerHTML='&#9654;'; });
+  vol.addEventListener('input', () => { audio.volume = vol.value/100; });
+
+  async function refresh() {
+    try {
+      const data = await fetch('/status-json.xsl',{cache:'no-store'}).then(r=>r.json());
+      let src = data.icestats?.source;
+      if (Array.isArray(src)) src = src.find(s=>s.listenurl?.endsWith('/stream'))||src[0];
+      if (src) {
+        document.getElementById('dot').classList.add('live');
+        document.getElementById('status').textContent = 'Live';
+        document.getElementById('name').textContent = src.server_name || 'Radio';
+        let title=src.title||'', artist=src.artist||'';
+        if (!artist&&title.includes(' - ')) [artist,title]=title.split(' - ',2);
+        document.getElementById('track').textContent  = title  || '—';
+        document.getElementById('artist').textContent = artist || '';
+        const n = src.listeners??0;
+        document.getElementById('listeners').textContent = n+' listener'+(n===1?'':'s');
+      } else {
+        document.getElementById('dot').classList.remove('live');
+        document.getElementById('status').textContent = 'Offline';
+      }
+    } catch { document.getElementById('status').textContent = 'Unavailable'; }
+  }
+  refresh();
+  setInterval(refresh, 10000);
+</script>
+</body>
+</html>

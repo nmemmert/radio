@@ -40,7 +40,7 @@ services:
             en_us: "Icecast stream and status page - point your reverse proxy here"
         - container: "8080"
           description:
-            en_us: "Radio admin panel - accessible at /panel/ (optionally proxy this too)"
+            en_us: "Public site + admin panel. Point your reverse proxy here: / is the public page, /panel/ is the admin panel, /embed is the embeddable player."
       volumes: []
     cap_add: []
     privileged: false

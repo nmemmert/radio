@@ -204,9 +204,21 @@ class Handler(BaseHTTPRequestHandler):
         return self.path.split("?")[0]
 
     def do_GET(self):
+        p = self._path()
+
+        # Public routes — no auth required
+        if p in ("/", "/index.html"):
+            self._html((HERE / "public.html").read_bytes()); return
+        if p in ("/embed", "/embed.html"):
+            self._html((HERE / "embed.html").read_bytes()); return
+        if p == "/api/public/history":
+            self._json(read_history()); return
+        if p == "/api/public/schedule":
+            self._json(read_schedule()); return
+
+        # Admin routes — auth required
         if not self._auth_ok():
             self._challenge(); return
-        p = self._path()
         if p in ("/panel", "/panel/", "/panel/index.html"):
             self._html((HERE / "index.html").read_bytes())
         elif p == "/panel/api/settings":

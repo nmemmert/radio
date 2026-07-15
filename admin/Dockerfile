@@ -1,4 +1,4 @@
 FROM python:3.12-alpine
 WORKDIR /app
-COPY server.py index.html ./
+COPY server.py index.html public.html embed.html ./
 CMD ["python3", "server.py"]

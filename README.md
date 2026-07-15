@@ -91,16 +91,25 @@ You should see it connect to Icecast without repeated errors.
 
 ### 3. Add the proxy host in Nginx Proxy Manager
 
-In the NPM UI, add a new **Proxy Host**:
+The stack now uses two ports:
+- **`:8080`** — public site (`/`), admin panel (`/panel/`), embed player (`/embed`)
+- **`:8000`** — Icecast stream (`/stream`) and status endpoints only
+
+In NPM, add **one Proxy Host** for your subdomain pointing at `:8080`, with this Advanced config
+to correctly route the stream and status API through to Icecast, and disable buffering on the stream:
+
+```nginx
+# Route stream and Icecast status endpoints to Icecast directly
+location ~ ^/(stream|status-json\.xsl|status\.xsl|admin/) {
+    proxy_pass http://<zimaos-lan-ip>:8000;
+    proxy_buffering off;
+}
+```
 
 - Domain: your chosen subdomain (e.g. `radio.yourdomain.com`)
-- Scheme: `http`, Forward Hostname/Port: `<zimaos-lan-ip>` / `8000`
+- Scheme: `http`, Forward Hostname/Port: `<zimaos-lan-ip>` / `8080`
 - SSL tab: request a new Let's Encrypt certificate, force SSL
-- **Advanced** tab, add this custom Nginx config so the live stream isn't buffered/delayed:
-
-  ```
-  proxy_buffering off;
-  ```
+- **Advanced** tab: paste the nginx block above (replacing `<zimaos-lan-ip>` with your box's LAN IP)
 
 Save. It should immediately be reachable at `https://radio.yourdomain.com`.
 
